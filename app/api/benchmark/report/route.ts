@@ -3,7 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 
 const reportSchema = z.object({
-  serverLabel: z.string().max(255).optional(),
+  // Cho phép serverLabel là string hoặc null và có thể không gửi lên
+  serverLabel: z.string().max(255).nullish(),
   avgPingMs: z.number().nonnegative().optional(),
   downloadMbps: z.number().nonnegative().optional(),
   score: z.number().min(0).max(10).optional(),
