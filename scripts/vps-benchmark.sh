@@ -20,7 +20,7 @@ PING_TARGETS=(
 )
 
 # URL API mặc định để gửi báo cáo (sẽ được thay bằng domain production của bạn)
-DEFAULT_REPORT_URL="https://vps-benchmark-hophamlam.vercel.app/api/benchmark/report"
+DEFAULT_REPORT_URL="https://vps-benchmark.hophamlam.com/api/benchmark/report"
 
 # URL file dùng để đo tốc độ download (có thể thay bằng endpoint CDN của bạn)
 DOWNLOAD_URL_DEFAULT="https://speed.hetzner.de/100MB.bin"
