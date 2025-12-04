@@ -42,8 +42,8 @@ export default async function LeaderboardPage({
 
   try {
     switch (finalSortBy) {
-    case "score":
-      rows = await db/* sql */<BenchmarkRow[]>`
+      case "score":
+        rows = (await db/* sql */ `
         SELECT
           id,
           created_at,
@@ -58,10 +58,10 @@ export default async function LeaderboardPage({
         ORDER BY score DESC NULLS LAST, created_at DESC
         LIMIT ${pageSize}
         OFFSET ${offset}
-      `;
-      break;
-    case "download":
-      rows = await db/* sql */<BenchmarkRow[]>`
+      `) as BenchmarkRow[];
+        break;
+      case "download":
+        rows = (await db/* sql */ `
         SELECT
           id,
           created_at,
@@ -76,10 +76,10 @@ export default async function LeaderboardPage({
         ORDER BY download_mbps DESC NULLS LAST, created_at DESC
         LIMIT ${pageSize}
         OFFSET ${offset}
-      `;
-      break;
-    case "ping":
-      rows = await db/* sql */<BenchmarkRow[]>`
+      `) as BenchmarkRow[];
+        break;
+      case "ping":
+        rows = (await db/* sql */ `
         SELECT
           id,
           created_at,
@@ -94,11 +94,11 @@ export default async function LeaderboardPage({
         ORDER BY avg_ping_ms ASC NULLS LAST, created_at DESC
         LIMIT ${pageSize}
         OFFSET ${offset}
-      `;
-      break;
-    case "date":
-    default:
-      rows = await db/* sql */<BenchmarkRow[]>`
+      `) as BenchmarkRow[];
+        break;
+      case "date":
+      default:
+        rows = (await db/* sql */ `
         SELECT
           id,
           created_at,
@@ -113,19 +113,20 @@ export default async function LeaderboardPage({
         ORDER BY created_at DESC
         LIMIT ${pageSize}
         OFFSET ${offset}
-      `;
-      break;
+      `) as BenchmarkRow[];
+        break;
     }
 
     // Get total count for pagination
-    const [countResult] = await db/* sql */<{ count: string }[]>`
+    const countRows = await db/* sql */ `
       SELECT COUNT(*) as count
       FROM benchmark_runs
       WHERE score IS NOT NULL
         OR download_mbps IS NOT NULL
         OR avg_ping_ms IS NOT NULL
     `;
-    totalCount = parseInt(countResult.count, 10);
+    const [countResult] = countRows as { count: string }[];
+    totalCount = countResult ? parseInt(countResult.count, 10) : 0;
     totalPages = Math.ceil(totalCount / pageSize);
   } catch (error) {
     // Log error nhưng không crash page
@@ -158,4 +159,3 @@ export default async function LeaderboardPage({
     </div>
   );
 }
-

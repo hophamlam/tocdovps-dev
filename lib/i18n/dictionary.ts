@@ -38,6 +38,10 @@ type TranslationKeys =
   | "latestBenchmarks.table.score"
   | "latestBenchmarks.empty"
   | "latestBenchmarks.emptyDescription"
+  | "stats.subtitle"
+  | "stats.totalRuns"
+  | "stats.avgScore"
+  | "stats.avgDownload"
   | "leaderboard.title"
   | "leaderboard.description"
   | "leaderboard.sortBy"
@@ -99,12 +103,10 @@ export const translations: Record<Locale, TranslationDict> = {
     "banner.goal.title": "Mục tiêu của vps-benchmark-hophamlam",
     "banner.goal.item1":
       "Cung cấp góc nhìn trung lập về hiệu năng VPS từ nhiều nhà cung cấp khác nhau.",
-    "banner.goal.item2":
-      "Dùng các bài test đơn giản, dễ hiểu, có thể lặp lại.",
+    "banner.goal.item2": "Dùng các bài test đơn giản, dễ hiểu, có thể lặp lại.",
     "banner.goal.item3":
       "Chia sẻ kết quả công khai, minh bạch, không quảng cáo trá hình.",
-    "banner.howItWorks.title":
-      "Cách benchmark sẽ hoạt động (dự kiến)",
+    "banner.howItWorks.title": "Cách benchmark sẽ hoạt động (dự kiến)",
     "banner.howItWorks.step1.title": "Bước 1 – Thu thập thông tin",
     "banner.howItWorks.step1.body":
       "Chọn gói VPS, nhà cung cấp và khu vực test.",
@@ -130,6 +132,11 @@ export const translations: Record<Locale, TranslationDict> = {
     "latestBenchmarks.empty": "Chưa có kết quả benchmark nào.",
     "latestBenchmarks.emptyDescription":
       "Chạy script benchmark trên VPS của bạn để xem kết quả ở đây.",
+    "stats.subtitle":
+      "Thống kê nhanh từ các kết quả benchmark đã được gửi lên hệ thống.",
+    "stats.totalRuns": "Tổng số lần benchmark",
+    "stats.avgScore": "Điểm trung bình",
+    "stats.avgDownload": "Tốc độ tải xuống trung bình",
     "leaderboard.title": "Bảng xếp hạng",
     "leaderboard.description":
       "Xem các kết quả benchmark được sắp xếp theo điểm số, tốc độ tải xuống, ping hoặc thời gian.",
@@ -146,11 +153,13 @@ export const translations: Record<Locale, TranslationDict> = {
     "leaderboard.empty": "Chưa có kết quả benchmark nào.",
     "leaderboard.emptyDescription":
       "Chạy script benchmark trên VPS của bạn để xem kết quả ở đây.",
-    "leaderboard.pagination.showing": "Hiển thị {start}-{end} trong tổng {total}",
+    "leaderboard.pagination.showing":
+      "Hiển thị {start}-{end} trong tổng {total}",
     "leaderboard.pagination.previous": "Trước",
     "leaderboard.pagination.next": "Sau",
     "result.title": "Chi tiết kết quả benchmark",
-    "result.description": "Xem thông tin chi tiết và dữ liệu thô của lần benchmark này.",
+    "result.description":
+      "Xem thông tin chi tiết và dữ liệu thô của lần benchmark này.",
     "result.backToLeaderboard": "Quay lại bảng xếp hạng",
     "result.summary.title": "Tóm tắt",
     "result.summary.time": "Thời gian",
@@ -197,8 +206,7 @@ export const translations: Record<Locale, TranslationDict> = {
       "Use simple, repeatable tests that are easy to understand.",
     "banner.goal.item3":
       "Share results publicly and transparently, with no hidden sponsorship.",
-    "banner.howItWorks.title":
-      "How the benchmarking will work (planned)",
+    "banner.howItWorks.title": "How the benchmarking will work (planned)",
     "banner.howItWorks.step1.title": "Step 1 – Collect information",
     "banner.howItWorks.step1.body":
       "Select the VPS plan, provider, and test region.",
@@ -224,6 +232,11 @@ export const translations: Record<Locale, TranslationDict> = {
     "latestBenchmarks.empty": "No benchmark results yet.",
     "latestBenchmarks.emptyDescription":
       "Run the benchmark script on your VPS to see results here.",
+    "stats.subtitle":
+      "Quick overview from benchmark runs that have been submitted.",
+    "stats.totalRuns": "Total benchmark runs",
+    "stats.avgScore": "Average score",
+    "stats.avgDownload": "Average download speed",
     "leaderboard.title": "Leaderboard",
     "leaderboard.description":
       "View benchmark results sorted by score, download speed, ping, or date.",
@@ -244,7 +257,8 @@ export const translations: Record<Locale, TranslationDict> = {
     "leaderboard.pagination.previous": "Previous",
     "leaderboard.pagination.next": "Next",
     "result.title": "Benchmark Result Details",
-    "result.description": "View detailed information and raw data for this benchmark run.",
+    "result.description":
+      "View detailed information and raw data for this benchmark run.",
     "result.backToLeaderboard": "Back to leaderboard",
     "result.summary.title": "Summary",
     "result.summary.time": "Time",
@@ -272,5 +286,3 @@ export const translations: Record<Locale, TranslationDict> = {
 export function getTranslation(locale: Locale, key: TranslationKeys): string {
   return translations[locale][key] ?? translations.vi[key] ?? key;
 }
-
-
