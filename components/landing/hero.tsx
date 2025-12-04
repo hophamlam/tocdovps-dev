@@ -10,7 +10,7 @@ import { useI18n } from "@/components/i18n/i18n-provider";
 export const HeroSection: React.FC = () => {
   const { t } = useI18n();
   const scriptCommand =
-    "bash <(curl -fsSL https://raw.githubusercontent.com/hophamlam/vps-benchmark/refs/heads/main/scripts/install.sh)";
+    "bash <(curl -fsSL https://tocdovps.dev/install)";
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -39,27 +39,22 @@ export const HeroSection: React.FC = () => {
             <p className="max-w-xl text-sm text-muted-foreground md:text-base">
               {t("hero.subtitle")}
             </p>
-            <p className="max-w-xl text-xs text-muted-foreground md:text-sm">
-              {t("hero.subtitleEn")}
-            </p>
           </div>
           <div className="space-y-3">
             <p className="max-w-md text-xs text-muted-foreground md:text-sm">
               {t("hero.ctaPrimaryNote")}
-              <br />
-              {t("hero.ctaPrimaryNoteEn")}
             </p>
             <div className="space-y-2 rounded-lg border border-dashed border-border bg-card/80 p-3 text-[11px] text-muted-foreground">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[11px] uppercase tracking-wide">
-                  Run benchmark on your VPS
+                  {t("hero.scriptLabel")}
                 </span>
                 <button
                   type="button"
                   onClick={handleCopy}
                   className="rounded-full bg-primary px-3 py-1 text-[11px] font-medium text-primary-foreground shadow-sm transition hover:opacity-90"
                 >
-                  {copied ? "Copied" : "Copy script"}
+                  {copied ? t("hero.copiedButton") : t("hero.copyButton")}
                 </button>
               </div>
               <pre className="whitespace-pre-wrap break-all font-mono">

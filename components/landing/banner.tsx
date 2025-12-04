@@ -21,18 +21,12 @@ export const BannerSection: React.FC = () => {
             </h2>
             <p className="text-sm text-muted-foreground">
               {t("banner.goal.item1")}
-              <br />
-              <span className="text-xs">{t("banner.goal.item1En")}</span>
             </p>
             <p className="text-sm text-muted-foreground">
               {t("banner.goal.item2")}
-              <br />
-              <span className="text-xs">{t("banner.goal.item2En")}</span>
             </p>
             <p className="text-sm text-muted-foreground">
               {t("banner.goal.item3")}
-              <br />
-              <span className="text-xs">{t("banner.goal.item3En")}</span>
             </p>
           </div>
 
@@ -45,19 +39,16 @@ export const BannerSection: React.FC = () => {
                 step="01"
                 title={t("banner.howItWorks.step1.title")}
                 body={t("banner.howItWorks.step1.body")}
-                bodyEn={t("banner.howItWorks.step1.bodyEn")}
               />
               <BannerStep
                 step="02"
                 title={t("banner.howItWorks.step2.title")}
                 body={t("banner.howItWorks.step2.body")}
-                bodyEn={t("banner.howItWorks.step2.bodyEn")}
               />
               <BannerStep
                 step="03"
                 title={t("banner.howItWorks.step3.title")}
                 body={t("banner.howItWorks.step3.body")}
-                bodyEn={t("banner.howItWorks.step3.bodyEn")}
               />
             </div>
           </div>
@@ -69,8 +60,6 @@ export const BannerSection: React.FC = () => {
           </h3>
           <p className="text-xs text-muted-foreground">
             {t("banner.demo.note")}
-            <br />
-            {t("banner.demo.noteEn")}
           </p>
         </div>
       </div>
@@ -82,22 +71,19 @@ type BannerStepProps = {
   step: string;
   title: string;
   body: string;
-  bodyEn: string;
 };
 
 /**
  * Component hiển thị 1 bước trong phần "Cách benchmark sẽ hoạt động"
  * @param step - số thứ tự bước (ví dụ "01")
  * @param title - tiêu đề bước
- * @param body - mô tả tiếng Việt
- * @param bodyEn - mô tả tiếng Anh
+ * @param body - mô tả theo locale hiện tại
  * @returns Card nhỏ mô tả 1 bước
  */
 const BannerStep: React.FC<BannerStepProps> = ({
   step,
   title,
   body,
-  bodyEn,
 }) => {
   return (
     <div className="flex gap-3 rounded-xl border border-border/70 bg-card/80 p-3 text-xs shadow-sm">
@@ -108,8 +94,6 @@ const BannerStep: React.FC<BannerStepProps> = ({
         <h4 className="text-xs font-medium md:text-sm">{title}</h4>
         <p className="text-[11px] text-muted-foreground md:text-xs">
           {body}
-          <br />
-          {bodyEn}
         </p>
       </div>
     </div>

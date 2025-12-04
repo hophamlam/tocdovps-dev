@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import type { Locale } from "@/lib/i18n/config";
 import { useTheme } from "@/components/theme/theme-provider";
@@ -43,18 +44,18 @@ export const Header: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           <nav className="hidden items-center gap-4 text-xs sm:flex">
-            <button
-              type="button"
-              className="text-muted-foreground hover:text-foreground"
+            <Link
+              href="/"
+              className="text-muted-foreground hover:text-foreground transition"
             >
               {t("header.nav.about")}
-            </button>
-            <button
-              type="button"
-              className="text-muted-foreground hover:text-foreground"
+            </Link>
+            <Link
+              href="/leaderboard"
+              className="text-muted-foreground hover:text-foreground transition"
             >
-              {t("header.nav.howItWorks")}
-            </button>
+              {t("header.nav.leaderboard")}
+            </Link>
           </nav>
           <button
             type="button"

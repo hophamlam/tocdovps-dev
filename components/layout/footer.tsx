@@ -15,7 +15,6 @@ export const Footer: React.FC = () => {
       <div className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-6 text-xs text-muted-foreground">
         <span className="font-medium">{t("header.brand")}</span>
         <span>{t("footer.note")}</span>
-        <span>{t("footer.noteEn")}</span>
       </div>
     </footer>
   );

@@ -20,7 +20,7 @@ PING_TARGETS=(
 )
 
 # URL API mặc định để gửi báo cáo
-DEFAULT_REPORT_URL="https://vps-benchmark.hophamlam.com/api/benchmark/report"
+DEFAULT_REPORT_URL="https://www.tocdovps.dev/api/benchmark/report"
 
 # Token mặc định để xác thực với API (server phải dùng cùng giá trị trong REPORT_TOKEN)
 DEFAULT_REPORT_TOKEN="dit-con-me-may-luon"
