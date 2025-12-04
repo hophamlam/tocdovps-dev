@@ -30,16 +30,7 @@ export default async function ResultDetailPage({
 
   try {
     // Query benchmark by ID
-    const [result] = await db/* sql */<{
-      id: string;
-      created_at: string;
-      source_ip: string | null;
-      server_label: string | null;
-      avg_ping_ms: string | null;
-      download_mbps: string | null;
-      score: string | null;
-      raw_payload: unknown;
-    }[]>`
+    const resultRows = await db/* sql */ `
       SELECT
         id,
         created_at,
@@ -52,6 +43,16 @@ export default async function ResultDetailPage({
       FROM benchmark_runs
       WHERE id = ${id}
     `;
+    const [result] = resultRows as {
+      id: string;
+      created_at: string;
+      source_ip: string | null;
+      server_label: string | null;
+      avg_ping_ms: string | null;
+      download_mbps: string | null;
+      score: string | null;
+      raw_payload: unknown;
+    }[];
     row = result;
   } catch (error) {
     // Log error và return 404
