@@ -148,3 +148,11 @@ Copy các values này vào `.env.local` và restart dev server.
 **Security Best Practice**: Luôn sử dụng `.env.local` cho local development và Vercel Environment Variables cho production. Không bao giờ commit `.env.local` vào git.
 
 
+
+
+
+
+
+
+
+

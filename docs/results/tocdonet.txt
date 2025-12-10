@@ -1,0 +1,47 @@
+curl -Lso- tocdo.net/share | bash
+
++------------------------------------------+---------------------------+----------------------+
+| Server Name                              | IP Address                | Download Speed       |
+System Info
+----------------------------------------------------------------------
+CPU model            : AMD EPYC 7763 64-Core Processor
+Number of cores      : 2
+CPU frequency        : 2445.406 MHz
+Total size of Disk   : 631.0 GB (140.1 GB Used)
+Total amount of Mem  : 7941 MB (1327 MB Used)
+Total amount of Swap : 4095 MB (0 MB Used)
+System uptime        : 5 days, 11 hour 54 min
+Load average         : 0.15, 0.71, 0.78
+OS                   : Ubuntu 24.04 LTS
+Arch                 : x86_64 (64 Bit)
+Kernel               : 6.8.0-88-generic
+Virt                 : redhat
+kvm
+Date                 : Mon Dec  8 10:15:55 +07 2025
+
+Disk Speed
+----------------------------------------------------------------------
+dd Test
+I/O (1st run)        : 939 MB/s
+I/O (2nd run)        : 908 MB/s
+I/O (3rd run)        : 923 MB/s
+Average              : 923.3 MB/s
+-----------------------------------
+Fio Test
+Read performance     : 227MB/s
+Read IOPS            : 55.5k
+Write performance    : 75.9MB/s
+Write IOPS           : 18.5k
+
+Speedtest
+----------------------------------------------------------------------
+Node Name                               IPv4 address    Download Speed
+CacheFly                                205.234.175.175 533KB/s       
+Vultr, Los Angeles, CA                  108.61.219.200  31.5MB/s      
+Vultr, Seattle, WA                      108.61.194.105  39.3MB/s      
+Linode, Tokyo, JP                       139.162.65.37   487MB/s       
+Linode, Singapore, SG                   139.162.23.4    30.9MB/s      
+ping: speedtest.hkg02.softlayer.com: Name or service not known
+Softlayer, HongKong, CN                                               
+VNPT, Ha Noi, VN                        113.164.24.102  4.45MB/s      
+VNPT, Da Nang, VN                       113.164.16.66   21.4MB/s      

@@ -59,50 +59,45 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               {t("hero.subtitle")}
             </p>
           </div>
-          <div className="space-y-3">
-            <p className="max-w-md text-xs text-muted-foreground md:text-sm">
-              {t("hero.ctaPrimaryNote")}
-            </p>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
-              >
-                <span className="truncate font-mono">{scriptCommand}</span>
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary-foreground/10">
-                  {copied ? (
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 16 16"
-                      className="h-3 w-3"
-                    >
-                      <path
-                        fill="currentColor"
-                        d="M6.00016 10.8002L3.20016 8.00016L2.26683 8.9335L6.00016 12.6668L14.0002 4.66683L13.0668 3.7335L6.00016 10.8002Z"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 16 16"
-                      className="h-3 w-3"
-                    >
-                      <path
-                        fill="currentColor"
-                        d="M4 1h9v11H4V1Zm1 1v9h7V2H5Zm-3 3h1v9h8v1H2V5Z"
-                      />
-                    </svg>
-                  )}
-                </span>
-              </button>
-              <Link
-                href="/leaderboard"
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-xs font-medium shadow-sm transition hover:bg-muted"
-              >
-                {t("hero.ctaSecondary")}
-              </Link>
-            </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
+            >
+              <span className="truncate font-mono">{scriptCommand}</span>
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary-foreground/10">
+                {copied ? (
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 16 16"
+                    className="h-3 w-3"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M6.00016 10.8002L3.20016 8.00016L2.26683 8.9335L6.00016 12.6668L14.0002 4.66683L13.0668 3.7335L6.00016 10.8002Z"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 16 16"
+                    className="h-3 w-3"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M4 1h9v11H4V1Zm1 1v9h7V2H5Zm-3 3h1v9h8v1H2V5Z"
+                    />
+                  </svg>
+                )}
+              </span>
+            </button>
+            <Link
+              href="/docs"
+              className="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium transition hover:bg-muted"
+            >
+              {t("hero.ctaSecondary")}
+            </Link>
           </div>
         </div>
 
@@ -112,46 +107,112 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[radial-gradient(circle_at_top,_var(--color-primary)/0.25,_transparent_55%),radial-gradient(circle_at_bottom,_var(--color-accent)/0.18,_transparent_55%)] opacity-80" />
 
             <div className="w-full max-w-md">
-              <Terminal className="max-h-[320px] shadow-lg">
+              <Terminal className="max-h-[400px] shadow-lg overflow-y-auto">
                 <TypingAnimation>
                   $ bash &lt;(curl -fsSL https://tocdovps.dev/install)
                 </TypingAnimation>
 
-                <AnimatedSpan className="text-green-500">
-                  ✔ Downloading benchmark script...
+                <AnimatedSpan className="text-foreground">
+                  ============================================================
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground font-semibold">
+                  &nbsp;&nbsp;tocdovps.dev (VPS benchmark)
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  ============================================================
                 </AnimatedSpan>
 
-                <AnimatedSpan className="text-green-500">
-                  ✔ Running ping tests...
+                <AnimatedSpan className="text-muted-foreground">
+                  [i] Estimated runtime ~15 minutes (disk, FIO, speedtest)...
+                </AnimatedSpan>
+                <AnimatedSpan className="text-muted-foreground">
+                  Share results?
+                </AnimatedSpan>
+                <AnimatedSpan className="text-muted-foreground">
+                  &nbsp;&nbsp;1) local&nbsp;&nbsp;&nbsp;- Keep local only
+                </AnimatedSpan>
+                <AnimatedSpan className="text-muted-foreground">
+                  &nbsp;&nbsp;2) private - Private URL
+                </AnimatedSpan>
+                <AnimatedSpan className="text-muted-foreground">
+                  &nbsp;&nbsp;3) shared&nbsp;&nbsp;- Public
+                </AnimatedSpan>
+                <AnimatedSpan className="text-muted-foreground">
+                  Choose (1/2/3) [default: 1]:
                 </AnimatedSpan>
 
+                <AnimatedSpan className="text-muted-foreground">
+                  1. System Information
+                </AnimatedSpan>
+                <AnimatedSpan className="text-muted-foreground">
+                  CPU&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  Cores&nbsp;&nbsp;: 4
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  RAM&nbsp;&nbsp;&nbsp;&nbsp;: 8.00 GB (Available: 6.50 GB)
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  OS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: Ubuntu - 22.04.3 LTS
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  Virt&nbsp;&nbsp;&nbsp;: KVM
+                </AnimatedSpan>
+
+                <AnimatedSpan className="text-foreground">
+                  ============================================================
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground font-semibold">
+                  &nbsp;&nbsp;2. Disk I/O Test
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  ============================================================
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  DD write avg : 2956 MB/s
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  DD read&nbsp; avg : 4519 MB/s
+                </AnimatedSpan>
+
+                <AnimatedSpan className="text-foreground">
+                  ============================================================
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground font-semibold">
+                  &nbsp;&nbsp;3. FIO Benchmark
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  ============================================================
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  4k&nbsp;&nbsp; | Read 0 MB/s | Write 0 MB/s | IOPS 0
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  1M&nbsp;&nbsp; | Read 0 MB/s | Write 0 MB/s | IOPS 0
+                </AnimatedSpan>
+
+                <AnimatedSpan className="text-foreground">
+                  ============================================================
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground font-semibold">
+                  &nbsp;&nbsp;4. Network Speed (Ookla)
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  ============================================================
+                </AnimatedSpan>
+                <AnimatedSpan className="text-foreground">
+                  Server                    | Ping  | Download | Upload
+                </AnimatedSpan>
                 <AnimatedSpan className="text-blue-500">
-                  → google.com: 28.13 ms
+                  VN HCM Viettel            | 2.7ms | 83.3 Mbps| 93.3 Mbps
                 </AnimatedSpan>
-
                 <AnimatedSpan className="text-blue-500">
-                  → cloudflare.com: 32.45 ms
+                  SG Singtel                | 44ms  | 22.0 Mbps| 92.9 Mbps
                 </AnimatedSpan>
-
-                <AnimatedSpan className="text-green-500">
-                  ✔ Running download test...
-                </AnimatedSpan>
-
                 <AnimatedSpan className="text-blue-500">
-                  → Speed: 920.5 Mbps
+                  US LA Hivelocity          | 174ms | 17.1 Mbps| 93.3 Mbps
                 </AnimatedSpan>
-
-                <AnimatedSpan className="text-green-500">
-                  ✔ Calculating score...
-                </AnimatedSpan>
-
-                <TypingAnimation className="text-primary font-semibold">
-                  ✓ Benchmark completed! Score: 8.7/10
-                </TypingAnimation>
-
-                <TypingAnimation className="text-muted-foreground">
-                  Share this result with tocdovps.dev? (y/N)
-                </TypingAnimation>
               </Terminal>
             </div>
           </div>

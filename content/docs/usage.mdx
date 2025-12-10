@@ -1,0 +1,43 @@
+import { T } from "@/components/docs/mdx-i18n-wrapper";
+
+# <T translationKey="docs.usage.title">Usage Examples</T>
+
+## <T translationKey="docs.usage.basic.title">Basic Usage</T>
+
+<T translationKey="docs.usage.basic.description">
+Run with default prompts (will ask for language and sharing mode):
+</T>
+
+```bash
+bash <(curl -fsSL https://tocdovps.dev/install)
+```
+
+## <T translationKey="docs.usage.mode.title">Sharing Mode</T>
+
+### Local Mode
+<T translationKey="docs.usage.mode.local">
+Keep result local, don't send data to server:
+</T>
+
+```bash
+bash <(curl -fsSL "https://tocdovps.dev/install?mode=local")
+```
+
+### Private Mode
+<T translationKey="docs.usage.mode.private">
+Share with server but only people with URL can view:
+</T>
+
+```bash
+bash <(curl -fsSL "https://tocdovps.dev/install?mode=private")
+```
+
+### Shared Mode
+<T translationKey="docs.usage.mode.shared">
+Share publicly, everyone can find it in leaderboard:
+</T>
+
+```bash
+bash <(curl -fsSL "https://tocdovps.dev/install?mode=shared")
+```
+

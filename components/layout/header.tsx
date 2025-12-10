@@ -34,7 +34,7 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex flex-col">
           <span className="text-sm font-semibold tracking-tight">
             {t("header.brand")}
@@ -56,6 +56,12 @@ export const Header: React.FC = () => {
               className="text-muted-foreground hover:text-foreground transition"
             >
               {t("header.nav.leaderboard")}
+            </Link>
+            <Link
+              href="/docs"
+              className="text-muted-foreground hover:text-foreground transition"
+            >
+              {t("header.nav.docs")}
             </Link>
           </nav>
           <Toggle

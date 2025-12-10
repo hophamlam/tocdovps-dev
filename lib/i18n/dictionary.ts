@@ -10,9 +10,9 @@ export const translations = {
     "header.locale.en": "EN",
     "hero.title": "Đánh giá tốc độ VPS một cách minh bạch",
     "hero.subtitle":
-      "tocdovps.dev là dự án cá nhân giúp bạn nhìn rõ hiệu năng thực tế của các gói VPS: độ trễ, tốc độ mạng, I/O… được kiểm tra và trình bày một cách dễ hiểu.",
+      "tocdovps.dev là dự án cá nhân giúp bạn nhìn rõ hiệu năng thực tế của các gói VPS: độ trễ, tốc độ mạng, I/O… được kiểm tra và trình bày một cách dễ hiểu. Bắt đầu benchmark VPS của bạn với tocdovps.dev.",
     "hero.ctaPrimary": "Khám phá benchmark (Coming soon)",
-    "hero.ctaSecondary": "Xem kết quả benchmark mới nhất",
+    "hero.ctaSecondary": "Tài liệu",
     "hero.ctaPrimaryNote": "Bắt đầu benchmark VPS của bạn với tocdovps.dev.",
     "hero.scriptLabel": "Chạy benchmark trên VPS của bạn",
     "hero.copyButton": "Sao chép script",
@@ -60,7 +60,9 @@ export const translations = {
     "footer.links.howItWorks": "Cách hoạt động",
     "footer.social.title": "Liên hệ",
     "footer.social.website": "hophamlam.com",
-    "footer.copyright": "© {year} tocdovps.dev. Dự án mã nguồn mở.",
+    "footer.copyright": "© {year} tocdovps.dev",
+    "footer.copyright.builtBy": "Được phát triển bởi",
+    "footer.copyright.sourceCode": "Mã nguồn mở tại",
     "latestBenchmarks.title": "Kết quả benchmark mới nhất",
     "latestBenchmarks.description":
       "Một số lần chạy gần đây được báo cáo từ script CLI.",
@@ -121,6 +123,101 @@ export const translations = {
       "Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.",
     "error.generic.retry": "Thử lại",
     "error.generic.backHome": "Về trang chủ",
+    "header.nav.docs": "Tài liệu",
+    "docs.title": "Tài liệu hướng dẫn",
+    "docs.description":
+      "Hướng dẫn chi tiết về cách sử dụng script benchmark VPS của tocdovps.dev",
+    "docs.quickStart.title": "Bắt đầu nhanh",
+    "docs.quickStart.description":
+      "Chạy lệnh sau trên VPS của bạn để bắt đầu benchmark:",
+    "docs.quickStart.note":
+      "Script sẽ tự động tải và chạy các test benchmark. Bạn sẽ được hỏi về ngôn ngữ và cách chia sẻ kết quả.",
+    "docs.usage.title": "Ví dụ sử dụng",
+    "docs.usage.basic.title": "Sử dụng cơ bản",
+    "docs.usage.basic.description":
+      "Chạy với prompt mặc định (sẽ hỏi ngôn ngữ và chế độ chia sẻ):",
+    "docs.usage.language.title": "Chọn ngôn ngữ",
+    "docs.usage.language.vi": "Chạy với giao diện tiếng Việt:",
+    "docs.usage.language.en": "Chạy với giao diện tiếng Anh:",
+    "docs.usage.mode.title": "Chọn chế độ chia sẻ",
+    "docs.usage.mode.local":
+      "Giữ kết quả ở local, không gửi dữ liệu lên server:",
+    "docs.usage.mode.private":
+      "Chia sẻ với server nhưng chỉ người có URL mới xem được:",
+    "docs.usage.mode.shared":
+      "Chia sẻ công khai, mọi người có thể tìm thấy trong bảng xếp hạng:",
+    "docs.usage.combined.title": "Kết hợp các tham số",
+    "docs.usage.combined.description":
+      "Bạn có thể kết hợp nhiều tham số cùng lúc:",
+    "docs.parameters.title": "Tham số",
+    "docs.parameters.optional": "Tùy chọn",
+    "docs.parameters.lang.description":
+      "Chọn ngôn ngữ cho giao diện script. Nếu không chỉ định, script sẽ hỏi bạn.",
+    "docs.parameters.lang.vi": "Tiếng Việt",
+    "docs.parameters.lang.en": "English",
+    "docs.parameters.mode.description":
+      "Chọn cách chia sẻ kết quả. Nếu không chỉ định, script sẽ hỏi bạn.",
+    "docs.parameters.mode.local": "Giữ kết quả ở local, không gửi dữ liệu",
+    "docs.parameters.mode.private":
+      "Chia sẻ với server, chỉ người có URL mới xem được",
+    "docs.parameters.mode.shared":
+      "Chia sẻ công khai, hiển thị trong bảng xếp hạng",
+    "docs.tests.title": "Script test những gì?",
+    "docs.tests.system.title": "Thông tin hệ thống",
+    "docs.tests.system.cpu": "Thông tin CPU (model, số nhân, tần số)",
+    "docs.tests.system.ram": "Thông tin RAM (tổng và khả dụng)",
+    "docs.tests.system.os": "Hệ điều hành và phiên bản",
+    "docs.tests.system.virtualization": "Loại ảo hóa (KVM, VMWARE, etc.)",
+    "docs.tests.performance.title": "Hiệu năng",
+    "docs.tests.performance.disk": "Disk I/O test (dd - 1GB file, 3 rounds)",
+    "docs.tests.performance.fio":
+      "FIO benchmark (4k, 64k, 512k, 1M block sizes)",
+    "docs.tests.performance.ioping": "Ioping latency test (optional)",
+    "docs.faq.title": "Câu hỏi thường gặp",
+    "docs.faq.q1.question": "Script có an toàn không?",
+    "docs.faq.q1.answer":
+      "Script chỉ chạy các test benchmark trên máy của bạn. Không cài đặt phần mềm, không thay đổi cấu hình hệ thống. Bạn có thể xem mã nguồn tại GitHub trước khi chạy.",
+    "docs.faq.q2.question": "Dữ liệu của tôi có được bảo mật không?",
+    "docs.faq.q2.answer":
+      "Bạn có thể chọn chế độ 'local' để không gửi dữ liệu lên server. Hoặc chọn 'private' để chỉ người có URL mới xem được. Chỉ khi chọn 'shared' thì kết quả mới hiển thị công khai.",
+    "docs.faq.q3.question": "Script có yêu cầu quyền root không?",
+    "docs.faq.q3.answer":
+      "Không, script không yêu cầu quyền root. Tuy nhiên, một số test có thể cần quyền nhất định (ví dụ: ping test).",
+    "docs.sidebar.quickStart": "Bắt đầu nhanh",
+    "docs.sidebar.usage": "Ví dụ sử dụng",
+    "docs.sidebar.parameters": "Tham số",
+    "docs.sidebar.technical": "Chi tiết kỹ thuật",
+    "docs.sidebar.tests": "Các test",
+    "docs.sidebar.faq": "Câu hỏi thường gặp",
+    "docs.technical.title": "Chi tiết kỹ thuật",
+    "docs.technical.howItWorks.title": "Script hoạt động như thế nào",
+    "docs.technical.howItWorks.description":
+      "Script benchmark thực hiện các test toàn diện trên VPS của bạn để đo hiệu năng thực tế:",
+    "docs.technical.howItWorks.step1":
+      "Thu thập thông tin hệ thống (CPU, RAM, OS, virtualization)",
+    "docs.technical.howItWorks.step2":
+      "Chạy test disk I/O bằng dd (file 1GB, 3 rounds, direct I/O)",
+    "docs.technical.howItWorks.step3":
+      "Chạy FIO benchmark với nhiều block sizes (4k, 64k, 512k, 1M)",
+    "docs.technical.howItWorks.step4":
+      "Tùy chọn gửi kết quả lên API tocdovps.dev để chia sẻ",
+    "docs.technical.ddTest.title": "DD Disk I/O Test",
+    "docs.technical.ddTest.description":
+      "Sử dụng lệnh dd để test tốc độ ghi và đọc tuần tự của disk. Test này cung cấp đo lường cơ bản về hiệu năng disk.",
+    "docs.technical.fioTest.title": "FIO Benchmark Test",
+    "docs.technical.fioTest.description":
+      "Sử dụng FIO (Flexible I/O Tester) để thực hiện benchmark disk I/O nâng cao. FIO cung cấp các metrics chi tiết bao gồm IOPS và bandwidth cho các block sizes khác nhau.",
+    "docs.technical.fioTest.note":
+      "FIO là tiêu chuẩn ngành cho disk I/O benchmarking. Config của chúng tôi sử dụng các thiết lập tối ưu (iodepth=16, runtime=30s, file 500MB) để đảm bảo kết quả chính xác và nhất quán.",
+    "docs.technical.bestPractices.title": "Best Practices",
+    "docs.technical.bestPractices.item1":
+      "Chạy test khi system load thấp để có kết quả chính xác hơn",
+    "docs.technical.bestPractices.item2":
+      "Đảm bảo đủ dung lượng disk (ít nhất 2GB trống cho FIO tests)",
+    "docs.technical.bestPractices.item3":
+      "Tests sử dụng direct I/O để bypass cache và đo hiệu năng disk thực tế",
+    "docs.technical.bestPractices.item4":
+      "Kết quả có thể thay đổi nhẹ giữa các lần chạy do system load và trạng thái disk",
   },
   en: {
     "header.brand": "tocdovps.dev",
@@ -131,9 +228,9 @@ export const translations = {
     "header.locale.en": "EN",
     "hero.title": "Transparent VPS performance benchmarking",
     "hero.subtitle":
-      "tocdovps.dev is a personal project to reveal the real-world performance of VPS plans – latency, network throughput, disk I/O – presented in a clear and honest way.",
+      "tocdovps.dev is a personal project to reveal the real-world performance of VPS plans – latency, network throughput, disk I/O – presented in a clear and honest way. Start benchmarking your VPS with tocdovps.dev.",
     "hero.ctaPrimary": "Explore benchmarks (Coming soon)",
-    "hero.ctaSecondary": "View latest benchmarks",
+    "hero.ctaSecondary": "Documentation",
     "hero.ctaPrimaryNote": "Start benchmarking your VPS with tocdovps.dev.",
     "hero.scriptLabel": "Run benchmark on your VPS",
     "hero.copyButton": "Copy script",
@@ -181,7 +278,9 @@ export const translations = {
     "footer.links.howItWorks": "How it works",
     "footer.social.title": "Connect",
     "footer.social.website": "hophamlam.com",
-    "footer.copyright": "© {year} tocdovps.dev. Open source project.",
+    "footer.copyright": "© {year} tocdovps.dev",
+    "footer.copyright.builtBy": "Built by",
+    "footer.copyright.sourceCode": "Source code available at",
     "latestBenchmarks.title": "Latest benchmarks",
     "latestBenchmarks.description":
       "A few of the most recent runs reported by the CLI script.",
@@ -241,6 +340,100 @@ export const translations = {
       "Sorry, an error occurred. Please try again later.",
     "error.generic.retry": "Try Again",
     "error.generic.backHome": "Back to Home",
+    "header.nav.docs": "Docs",
+    "docs.title": "Documentation",
+    "docs.description":
+      "Complete guide on how to use tocdovps.dev VPS benchmark script",
+    "docs.quickStart.title": "Quick Start",
+    "docs.quickStart.description":
+      "Run the following command on your VPS to start benchmarking:",
+    "docs.quickStart.note":
+      "The script will automatically download and run benchmark tests. You'll be prompted for language and sharing preferences.",
+    "docs.usage.title": "Usage Examples",
+    "docs.usage.basic.title": "Basic Usage",
+    "docs.usage.basic.description":
+      "Run with default prompts (will ask for language and sharing mode):",
+    "docs.usage.language.title": "Language Selection",
+    "docs.usage.language.vi": "Run with Vietnamese interface:",
+    "docs.usage.language.en": "Run with English interface:",
+    "docs.usage.mode.title": "Sharing Mode",
+    "docs.usage.mode.local": "Keep result local, don't send data to server:",
+    "docs.usage.mode.private":
+      "Share with server but only people with URL can view:",
+    "docs.usage.mode.shared":
+      "Share publicly, everyone can find it in leaderboard:",
+    "docs.usage.combined.title": "Combining Parameters",
+    "docs.usage.combined.description":
+      "You can combine multiple parameters at once:",
+    "docs.parameters.title": "Parameters",
+    "docs.parameters.optional": "Optional",
+    "docs.parameters.lang.description":
+      "Choose language for script interface. If not specified, script will ask you.",
+    "docs.parameters.lang.vi": "Vietnamese",
+    "docs.parameters.lang.en": "English",
+    "docs.parameters.mode.description":
+      "Choose how to share results. If not specified, script will ask you.",
+    "docs.parameters.mode.local": "Keep result local, don't send data",
+    "docs.parameters.mode.private":
+      "Share with server, only people with URL can view",
+    "docs.parameters.mode.shared": "Share publicly, display in leaderboard",
+    "docs.tests.title": "What does the script test?",
+    "docs.tests.system.title": "System Information",
+    "docs.tests.system.cpu": "CPU information (model, cores, frequency)",
+    "docs.tests.system.ram": "RAM information (total and available)",
+    "docs.tests.system.os": "Operating system and version",
+    "docs.tests.system.virtualization":
+      "Virtualization type (KVM, VMWARE, etc.)",
+    "docs.tests.performance.title": "Performance",
+    "docs.tests.performance.disk": "Disk I/O test (dd - 1GB file, 3 rounds)",
+    "docs.tests.performance.fio":
+      "FIO benchmark (4k, 64k, 512k, 1M block sizes)",
+    "docs.tests.performance.ioping": "Ioping latency test (optional)",
+    "docs.faq.title": "Frequently Asked Questions",
+    "docs.faq.q1.question": "Is the script safe?",
+    "docs.faq.q1.answer":
+      "The script only runs benchmark tests on your machine. It doesn't install software or modify system configuration. You can view the source code on GitHub before running.",
+    "docs.faq.q2.question": "Is my data secure?",
+    "docs.faq.q2.answer":
+      "You can choose 'local' mode to not send data to server. Or choose 'private' so only people with URL can view. Only when choosing 'shared' will results be displayed publicly.",
+    "docs.faq.q3.question": "Does the script require root?",
+    "docs.faq.q3.answer":
+      "No, the script doesn't require root. However, some tests may need certain permissions (e.g., ping test).",
+    "docs.sidebar.quickStart": "Quick Start",
+    "docs.sidebar.usage": "Usage Examples",
+    "docs.sidebar.parameters": "Parameters",
+    "docs.sidebar.technical": "Technical Details",
+    "docs.sidebar.tests": "What it Tests",
+    "docs.sidebar.faq": "FAQ",
+    "docs.technical.title": "Technical Details",
+    "docs.technical.howItWorks.title": "How the Script Works",
+    "docs.technical.howItWorks.description":
+      "The benchmark script performs comprehensive tests on your VPS to measure real-world performance:",
+    "docs.technical.howItWorks.step1":
+      "Collects system information (CPU, RAM, OS, virtualization)",
+    "docs.technical.howItWorks.step2":
+      "Runs disk I/O tests using dd (1GB file, 3 rounds, direct I/O)",
+    "docs.technical.howItWorks.step3":
+      "Runs FIO benchmark with multiple block sizes (4k, 64k, 512k, 1M)",
+    "docs.technical.howItWorks.step4":
+      "Optionally sends results to tocdovps.dev API for sharing",
+    "docs.technical.ddTest.title": "DD Disk I/O Test",
+    "docs.technical.ddTest.description":
+      "Uses dd command to test sequential disk write and read speeds. This test provides a baseline measurement of disk performance.",
+    "docs.technical.fioTest.title": "FIO Benchmark Test",
+    "docs.technical.fioTest.description":
+      "Uses FIO (Flexible I/O Tester) to perform advanced disk I/O benchmarks. FIO provides detailed metrics including IOPS and bandwidth for different block sizes.",
+    "docs.technical.fioTest.note":
+      "FIO is the industry standard for disk I/O benchmarking. Our configuration uses optimal settings (iodepth=16, runtime=30s, 500MB file) to ensure accurate and consistent results.",
+    "docs.technical.bestPractices.title": "Best Practices",
+    "docs.technical.bestPractices.item1":
+      "Run tests when system load is low for more accurate results",
+    "docs.technical.bestPractices.item2":
+      "Ensure sufficient disk space (at least 2GB free for FIO tests)",
+    "docs.technical.bestPractices.item3":
+      "Tests use direct I/O to bypass cache and measure real disk performance",
+    "docs.technical.bestPractices.item4":
+      "Results may vary slightly between runs due to system load and disk state",
   },
 } as const satisfies Record<Locale, Record<string, string>>;
 

@@ -1,0 +1,71 @@
+import { Zap, HardDrive, Cpu } from "lucide-react";
+import { T } from "@/components/docs/mdx-i18n-wrapper";
+
+# <T translationKey="docs.technical.title">Technical Details</T>
+
+## <T translationKey="docs.technical.howItWorks.title">How the Script Works</T>
+
+<T translationKey="docs.technical.howItWorks.description">
+  The benchmark script performs comprehensive tests on your VPS to measure
+  real-world performance:
+</T>
+
+1. <T translationKey="docs.technical.howItWorks.step1">
+     Collects system information (CPU, RAM, OS, virtualization)
+   </T>
+2. <T translationKey="docs.technical.howItWorks.step2">
+     Runs disk I/O tests using dd (1GB file, 3 rounds, direct I/O)
+   </T>
+3. <T translationKey="docs.technical.howItWorks.step3">
+     Runs FIO benchmark with multiple block sizes (4k, 64k, 512k, 1M)
+   </T>
+4. <T translationKey="docs.technical.howItWorks.step4">
+     Optionally sends results to tocdovps.dev API for sharing
+   </T>
+
+## <T translationKey="docs.technical.ddTest.title">DD Disk I/O Test</T>
+
+<T translationKey="docs.technical.ddTest.description">
+  Uses dd command to test sequential disk write and read speeds. This test
+  provides a baseline measurement of disk performance.
+</T>
+
+- **File size:** 1GB
+- **Rounds:** 3 (write) + 3 (read)
+- **Direct I/O:** enabled (bypass cache)
+- **Result:** Average of 3 rounds
+
+## <T translationKey="docs.technical.fioTest.title">FIO Benchmark Test</T>
+
+<T translationKey="docs.technical.fioTest.description">
+  Uses FIO (Flexible I/O Tester) to perform advanced disk I/O benchmarks. FIO
+  provides detailed metrics including IOPS and bandwidth for different block
+  sizes.
+</T>
+
+- **Block sizes:** 4k, 64k, 512k, 1M
+- **File size:** 500MB per test
+- **Runtime:** 30 seconds
+- **I/O depth:** 16
+- **Direct I/O:** enabled
+
+<T translationKey="docs.technical.fioTest.note">
+  FIO is the industry standard for disk I/O benchmarking. Our configuration uses
+  optimal settings (iodepth=16, runtime=30s, 500MB file) to ensure accurate and
+  consistent results.
+</T>
+
+## <T translationKey="docs.technical.bestPractices.title">Best Practices</T>
+
+- <T translationKey="docs.technical.bestPractices.item1">
+    Run tests when system load is low for more accurate results
+  </T>
+- <T translationKey="docs.technical.bestPractices.item2">
+    Ensure sufficient disk space (at least 2GB free for FIO tests)
+  </T>
+- <T translationKey="docs.technical.bestPractices.item3">
+    Tests use direct I/O to bypass cache and measure real disk performance
+  </T>
+- <T translationKey="docs.technical.bestPractices.item4">
+    Results may vary slightly between runs due to system load and disk state
+  </T>
