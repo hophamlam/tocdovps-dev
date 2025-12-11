@@ -1,14 +1,59 @@
 import { T } from "@/components/docs/mdx-i18n-wrapper";
+import { getBaseUrl } from "@/lib/base-url";
+import { CodeBlock } from "@/components/docs/mdx-code-block";
 
 # <T translationKey="docs.parameters.title">Parameters</T>
 
-## <T translationKey="docs.parameters.optional">Tùy chọn</T>
+## <T translationKey="docs.parameters.mode.title">Sharing Mode</T>
 
 <T translationKey="docs.parameters.mode.description">
-Choose how to share results. If not specified, script will ask you.
+  Choose how to share results. If not specified, script will prompt you
+  (defaults to private after 8 seconds).
 </T>
 
 - `local` - <T translationKey="docs.parameters.mode.local">Keep result local, don't send data</T>
 - `private` - <T translationKey="docs.parameters.mode.private">Share with server, only people with URL can view</T>
 - `shared` - <T translationKey="docs.parameters.mode.shared">Share publicly, display in leaderboard</T>
 
+<T translationKey="docs.parameters.mode.example">
+  Example: Specify mode via URL parameter (BASE_URL tự lấy theo môi trường hiện
+  tại)
+</T>
+
+<CodeBlock className="language-bash">
+  {`bash <(curl -fsSL "${getBaseUrl()}/install?mode=shared")`}
+</CodeBlock>
+
+## <T translationKey="docs.parameters.environment.title">Environment Variables</T>
+
+### <T translationKey="docs.parameters.environment.skipFio.title">SKIP_FIO</T>
+
+<T translationKey="docs.parameters.environment.skipFio.description">
+  Skip FIO benchmark test. Set to `1` to skip, `0` or unset to run (default:
+  run).
+</T>
+
+<CodeBlock className="language-bash">
+  {`SKIP_FIO=1 bash <(curl -fsSL ${getBaseUrl()}/install)`}
+</CodeBlock>
+
+### <T translationKey="docs.parameters.environment.networkOnly.title">NETWORK_ONLY</T>
+
+<T translationKey="docs.parameters.environment.networkOnly.description">
+  Run only network speed tests. Set to `1` to enable, `0` or unset for full
+  benchmark (default: full benchmark).
+</T>
+
+<CodeBlock className="language-bash">
+  {`NETWORK_ONLY=1 bash <(curl -fsSL ${getBaseUrl()}/install)`}
+</CodeBlock>
+
+### <T translationKey="docs.parameters.environment.reportUrl.title">REPORT_URL</T>
+
+<T translationKey="docs.parameters.environment.reportUrl.description">
+  Override default API endpoint URL. Useful for development or testing.
+</T>
+
+<CodeBlock className="language-bash">
+  {`REPORT_URL="https://your-api.com/report" bash <(curl -fsSL ${getBaseUrl()}/install)`}
+</CodeBlock>

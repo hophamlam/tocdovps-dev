@@ -1,5 +1,5 @@
-import { Zap, HardDrive, Cpu } from "lucide-react";
 import { T } from "@/components/docs/mdx-i18n-wrapper";
+import { getBaseUrl } from "@/lib/base-url";
 
 # <T translationKey="docs.technical.title">Technical Details</T>
 
@@ -7,20 +7,28 @@ import { T } from "@/components/docs/mdx-i18n-wrapper";
 
 <T translationKey="docs.technical.howItWorks.description">
   The benchmark script performs comprehensive tests on your VPS to measure
-  real-world performance:
+  real-world performance. Estimated runtime is approximately 15 minutes.
 </T>
 
 1. <T translationKey="docs.technical.howItWorks.step1">
-     Collects system information (CPU, RAM, OS, virtualization)
+     Collects system information (CPU, RAM, Swap, Disk, Load, Uptime, OS,
+     Virtualization, Provider)
    </T>
 2. <T translationKey="docs.technical.howItWorks.step2">
-     Runs disk I/O tests using dd (1GB file, 3 rounds, direct I/O)
+     Runs disk I/O tests using dd (1GB file, 3 write rounds + 3 read rounds,
+     direct I/O)
    </T>
 3. <T translationKey="docs.technical.howItWorks.step3">
-     Runs FIO benchmark with multiple block sizes (4k, 64k, 512k, 1M)
+     Runs FIO benchmark with multiple block sizes (4k, 64k, 512k, 1M) - can be
+     skipped with SKIP_FIO=1
    </T>
 4. <T translationKey="docs.technical.howItWorks.step4">
-     Optionally sends results to tocdovps.dev API for sharing
+     Runs network speed tests using Speedtest by Ookla (multiple servers
+     worldwide)
+   </T>
+5. <T translationKey="docs.technical.howItWorks.step5">
+     Optionally sends results to API at {getBaseUrl()} for sharing (based on
+     mode: local/private/shared)
    </T>
 
 ## <T translationKey="docs.technical.ddTest.title">DD Disk I/O Test</T>
@@ -30,10 +38,24 @@ import { T } from "@/components/docs/mdx-i18n-wrapper";
   provides a baseline measurement of disk performance.
 </T>
 
-- **File size:** 1GB
-- **Rounds:** 3 (write) + 3 (read)
-- **Direct I/O:** enabled (bypass cache)
-- **Result:** Average of 3 rounds
+- <T translationKey="docs.technical.ddTest.fileSize">
+    File size: 1GB (1073741824 bytes)
+  </T>
+- <T translationKey="docs.technical.ddTest.rounds">
+    Rounds: 3 write + 3 read (total 6 rounds)
+  </T>
+- <T translationKey="docs.technical.ddTest.directIo">
+    Direct I/O: enabled (bypass cache using oflag=direct)
+  </T>
+- <T translationKey="docs.technical.ddTest.fallback">
+    Fallback: If direct I/O fails, falls back to normal I/O
+  </T>
+- <T translationKey="docs.technical.ddTest.result">
+    Result: Average of successful rounds
+  </T>
+- <T translationKey="docs.technical.ddTest.metrics">
+    Metrics: Write speed (MB/s, Mbps), Read speed (MB/s, Mbps)
+  </T>
 
 ## <T translationKey="docs.technical.fioTest.title">FIO Benchmark Test</T>
 
@@ -43,16 +65,72 @@ import { T } from "@/components/docs/mdx-i18n-wrapper";
   sizes.
 </T>
 
-- **Block sizes:** 4k, 64k, 512k, 1M
-- **File size:** 500MB per test
-- **Runtime:** 30 seconds
-- **I/O depth:** 16
-- **Direct I/O:** enabled
+- <T translationKey="docs.technical.fioTest.blockSizes">
+    Block sizes: 4k, 64k, 512k, 1M (4 tests total)
+  </T>
+- <T translationKey="docs.technical.fioTest.fileSize">
+    File size: 500MB per test (larger than cache)
+  </T>
+- <T translationKey="docs.technical.fioTest.runtime">
+    Runtime: 30 seconds per block size
+  </T>
+- <T translationKey="docs.technical.fioTest.iodepth">I/O depth: 16</T>
+- <T translationKey="docs.technical.fioTest.ioengine">I/O engine: libaio</T>
+- <T translationKey="docs.technical.fioTest.directIo">
+    Direct I/O: enabled (bypass cache)
+  </T>
+- <T translationKey="docs.technical.fioTest.metrics">
+    Metrics: Total/Read/Write bandwidth (MB/s), Total/Read/Write IOPS
+  </T>
+- <T translationKey="docs.technical.fioTest.ioping">
+    Ioping latency: Tested if ioping is available
+  </T>
+
+<T translationKey="docs.technical.fioTest.autoInstall">
+  FIO will be automatically installed if not available and sudo is present.
+  Installation supports: apt-get (Debian/Ubuntu), yum (CentOS/RHEL), dnf
+  (Fedora), pacman (Arch).
+</T>
 
 <T translationKey="docs.technical.fioTest.note">
   FIO is the industry standard for disk I/O benchmarking. Our configuration uses
   optimal settings (iodepth=16, runtime=30s, 500MB file) to ensure accurate and
-  consistent results.
+  consistent results. You can skip FIO test with `SKIP_FIO=1` to reduce runtime.
+</T>
+
+## <T translationKey="docs.technical.networkTest.title">Network Speed Test</T>
+
+<T translationKey="docs.technical.networkTest.description">
+  Network speed test using Speedtest CLI by Ookla. Tests multiple servers
+  worldwide to measure latency and bandwidth.
+</T>
+
+- <T translationKey="docs.technical.networkTest.tool">
+    Tool: Speedtest CLI by Ookla (official)
+  </T>
+- <T translationKey="docs.technical.networkTest.servers">
+    Servers: Multiple servers tested (VN, SG, HK, JP, IN, AU, US, BR, UK, DE,
+    etc.)
+  </T>
+- <T translationKey="docs.technical.networkTest.metrics">
+    Metrics: Ping (latency in ms), Download speed (Mbps), Upload speed (Mbps)
+  </T>
+- <T translationKey="docs.technical.networkTest.format">
+    Output format: JSON (parsed with Python3/jq/regex fallback)
+  </T>
+- <T translationKey="docs.technical.networkTest.rateLimit">
+    Rate limiting: 3 seconds sleep between servers to avoid Ookla rate limits
+  </T>
+
+<T translationKey="docs.technical.networkTest.autoInstall">
+  Speedtest CLI will be automatically installed if not available (Debian/Ubuntu
+  only). For other distributions, please install manually from
+  https://www.speedtest.net/apps/cli
+</T>
+
+<T translationKey="docs.technical.networkTest.networkOnly">
+  You can run only network tests with `NETWORK_ONLY=1` option, which skips all
+  other tests.
 </T>
 
 ## <T translationKey="docs.technical.bestPractices.title">Best Practices</T>
@@ -68,4 +146,16 @@ import { T } from "@/components/docs/mdx-i18n-wrapper";
   </T>
 - <T translationKey="docs.technical.bestPractices.item4">
     Results may vary slightly between runs due to system load and disk state
+  </T>
+- <T translationKey="docs.technical.bestPractices.item5">
+    Network tests may take longer if many servers are tested (default: ~12
+    servers)
+  </T>
+- <T translationKey="docs.technical.bestPractices.item6">
+    FIO test can be skipped with `SKIP_FIO=1` if you only need basic disk I/O
+    test
+  </T>
+- <T translationKey="docs.technical.bestPractices.item7">
+    Use `NETWORK_ONLY=1` for quick network speed check without running other
+    tests
   </T>

@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useI18n } from "@/components/i18n/i18n-provider";
+import { getBaseUrl } from "@/lib/base-url";
 
 /**
  * Footer với layout grid, quick links và social links
@@ -10,6 +11,7 @@ import { useI18n } from "@/components/i18n/i18n-provider";
  */
 export const Footer: React.FC = () => {
   const { t } = useI18n();
+  const baseUrl = getBaseUrl();
 
   return (
     <footer className="border-t border-border bg-background">
@@ -19,13 +21,10 @@ export const Footer: React.FC = () => {
           <div className="space-y-3">
             <Link
               href="/"
-              className="inline-block text-sm font-semibold hover:text-foreground transition-colors"
+              className="inline-block text-lg font-semibold hover:text-foreground transition-colors sm:text-xl"
             >
-              {t("header.brand")}
+              tocdovps.dev
             </Link>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {t("footer.note")}
-            </p>
           </div>
 
           {/* Quick Links */}
@@ -67,7 +66,7 @@ export const Footer: React.FC = () => {
               className="underline"
               aria-label="Visit hophamlam.com"
             >
-              hophamlam.com
+              hophamlam
             </Link>
             {" • "}
             {t("footer.copyright.sourceCode")}{" "}

@@ -13,6 +13,13 @@ import { T } from "@/components/docs/mdx-i18n-wrapper";
  * Thay thế các HTML elements mặc định bằng shadcn UI components
  */
 const components: MDXComponents = {
+  // Wrapper để áp dụng prose và khoảng cách chuẩn cho toàn bộ nội dung MDX
+  wrapper: ({ children }) => (
+    <div className="prose prose-neutral dark:prose-invert max-w-none">
+      {children}
+    </div>
+  ),
+
   // Headings - Style giống shadcn/ui docs
   h1: (props) => (
     <h1
@@ -45,7 +52,12 @@ const components: MDXComponents = {
   ),
 
   // Lists - Style giống shadcn/ui docs
-  ul: (props) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2 text-sm text-muted-foreground" {...props} />,
+  ul: (props) => (
+    <ul
+      className="my-6 ml-6 list-disc [&>li]:mt-2 text-sm text-muted-foreground"
+      {...props}
+    />
+  ),
   ol: (props) => (
     <ol className="my-6 ml-6 list-decimal [&>li]:mt-2" {...props} />
   ),
@@ -147,6 +159,19 @@ const components: MDXComponents = {
   TabsList,
   TabsTrigger,
   TabsContent,
+  // Callout đơn giản dựa trên Alert
+  Callout: ({
+    title,
+    children,
+  }: {
+    title?: React.ReactNode;
+    children?: React.ReactNode;
+  }) => (
+    <Alert className="not-prose">
+      {title ? <AlertTitle>{title}</AlertTitle> : null}
+      <AlertDescription>{children}</AlertDescription>
+    </Alert>
+  ),
   // i18n wrapper
   T,
 };

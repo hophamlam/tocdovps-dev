@@ -1,43 +1,75 @@
 import { T } from "@/components/docs/mdx-i18n-wrapper";
+import { getBaseUrl } from "@/lib/base-url";
+import { CodeBlock } from "@/components/docs/mdx-code-block";
 
 # <T translationKey="docs.usage.title">Usage Examples</T>
 
 ## <T translationKey="docs.usage.basic.title">Basic Usage</T>
 
 <T translationKey="docs.usage.basic.description">
-Run with default prompts (will ask for language and sharing mode):
+  Run with default settings (will prompt for sharing mode after 8 seconds,
+  defaults to private). BASE_URL tự lấy theo môi trường hiện tại:
 </T>
 
-```bash
-bash <(curl -fsSL https://tocdovps.dev/install)
-```
+<CodeBlock className="language-bash">
+  {`bash <(curl -fsSL ${getBaseUrl()}/install)`}
+</CodeBlock>
 
 ## <T translationKey="docs.usage.mode.title">Sharing Mode</T>
 
-### Local Mode
+<T translationKey="docs.usage.mode.intro">
+  You can specify sharing mode via URL parameter or command line argument:
+</T>
+
+### <T translationKey="docs.usage.mode.local.title">Local Mode</T>
+
 <T translationKey="docs.usage.mode.local">
-Keep result local, don't send data to server:
+  Keep result local, don't send data to server:
 </T>
 
-```bash
-bash <(curl -fsSL "https://tocdovps.dev/install?mode=local")
-```
+<CodeBlock className="language-bash">
+  {`bash <(curl -fsSL "${getBaseUrl()}/install?mode=local")`}
+</CodeBlock>
 
-### Private Mode
+### <T translationKey="docs.usage.mode.private.title">Private Mode</T>
+
 <T translationKey="docs.usage.mode.private">
-Share with server but only people with URL can view:
+  Share with server but only people with URL can view:
 </T>
 
-```bash
-bash <(curl -fsSL "https://tocdovps.dev/install?mode=private")
-```
+<CodeBlock className="language-bash">
+  {`bash <(curl -fsSL "${getBaseUrl()}/install?mode=private")`}
+</CodeBlock>
 
-### Shared Mode
+### <T translationKey="docs.usage.mode.shared.title">Shared Mode</T>
+
 <T translationKey="docs.usage.mode.shared">
-Share publicly, everyone can find it in leaderboard:
+  Share publicly, everyone can find it in leaderboard:
 </T>
 
-```bash
-bash <(curl -fsSL "https://tocdovps.dev/install?mode=shared")
-```
+<CodeBlock className="language-bash">
+  {`bash <(curl -fsSL "${getBaseUrl()}/install?mode=shared")`}
+</CodeBlock>
 
+## <T translationKey="docs.usage.advanced.title">Advanced Options</T>
+
+### <T translationKey="docs.usage.advanced.skipFio.title">Skip FIO Test</T>
+
+<T translationKey="docs.usage.advanced.skipFio.description">
+  Skip FIO benchmark test to reduce runtime (useful if you only need basic disk
+  I/O test):
+</T>
+
+<CodeBlock className="language-bash">
+  {`SKIP_FIO=1 bash <(curl -fsSL ${getBaseUrl()}/install)`}
+</CodeBlock>
+
+### <T translationKey="docs.usage.advanced.networkOnly.title">Network Test Only</T>
+
+<T translationKey="docs.usage.advanced.networkOnly.description">
+  Run only network speed tests (skip system info, disk I/O, and FIO tests):
+</T>
+
+<CodeBlock className="language-bash">
+  {`NETWORK_ONLY=1 bash <(curl -fsSL ${getBaseUrl()}/install)`}
+</CodeBlock>

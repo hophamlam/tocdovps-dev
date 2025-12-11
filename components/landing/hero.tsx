@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useI18n } from "@/components/i18n/i18n-provider";
+import { getBaseUrl } from "@/lib/base-url";
 import {
   AnimatedSpan,
   Terminal,
@@ -22,7 +23,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   totalBenchmarks = 0,
 }) => {
   const { t } = useI18n();
-  const scriptCommand = "bash <(curl -fsSL https://tocdovps.dev/install)";
+  const baseUrl = getBaseUrl();
+  const scriptCommand = `bash <(curl -fsSL ${baseUrl}/install)`;
+  const typingLine = `$ ${scriptCommand}`;
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -108,9 +111,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             <div className="w-full max-w-md">
               <Terminal className="max-h-[400px] shadow-lg overflow-y-auto">
-                <TypingAnimation>
-                  $ bash &lt;(curl -fsSL https://tocdovps.dev/install)
-                </TypingAnimation>
+                <TypingAnimation>{typingLine.toString()}</TypingAnimation>
 
                 <AnimatedSpan className="text-foreground">
                   ============================================================

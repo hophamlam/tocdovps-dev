@@ -5,22 +5,35 @@ import { T } from "@/components/docs/mdx-i18n-wrapper";
 ## <T translationKey="docs.faq.q1.question">Is the script safe?</T>
 
 <T translationKey="docs.faq.q1.answer">
-  The script only runs benchmark tests on your machine. It doesn't install
-  software or modify system configuration. You can view the source code on
-  GitHub before running.
+The script only runs benchmark tests on your machine. It doesn't install software or modify system configuration (except auto-installing fio and speedtest if needed and sudo is available). You can view the source code on GitHub before running.
 </T>
 
 ## <T translationKey="docs.faq.q2.question">Is my data secure?</T>
 
 <T translationKey="docs.faq.q2.answer">
-  You can choose 'local' mode to not send data to server. Or choose 'private' so
-  only people with URL can view. Only when choosing 'shared' will results be
-  displayed publicly.
+You can choose 'local' mode to not send data to server. Or choose 'private' so only people with URL can view. Only when choosing 'shared' will results be displayed publicly in the leaderboard.
 </T>
 
 ## <T translationKey="docs.faq.q3.question">Does the script require root?</T>
 
 <T translationKey="docs.faq.q3.answer">
-  No, the script doesn't require root. However, some tests may need certain
-  permissions (e.g., ping test).
+No, the script doesn't require root to run. However, some operations (like installing fio or speedtest) may require sudo if those packages are not already installed. The script will skip auto-installation if sudo is not available.
+</T>
+
+## <T translationKey="docs.faq.q4.question">How long does the benchmark take?</T>
+
+<T translationKey="docs.faq.q4.answer">
+The full benchmark takes approximately 15 minutes. This includes system info collection (~1min), disk I/O test (~3min), FIO test (~8min for 4 block sizes), and network speed tests (~3min for multiple servers). You can reduce runtime by skipping FIO with `SKIP_FIO=1` or run only network tests with `NETWORK_ONLY=1`.
+</T>
+
+## <T translationKey="docs.faq.q5.question">What packages does the script install?</T>
+
+<T translationKey="docs.faq.q5.answer">
+The script may auto-install fio (for FIO benchmark) and speedtest (Ookla CLI for network tests) if they are not available and sudo is present. Installation supports apt-get (Debian/Ubuntu), yum (CentOS/RHEL), dnf (Fedora), and pacman (Arch). Speedtest auto-install only works on Debian/Ubuntu.
+</T>
+
+## <T translationKey="docs.faq.q6.question">Can I skip certain tests?</T>
+
+<T translationKey="docs.faq.q6.answer">
+Yes! Use `SKIP_FIO=1` to skip FIO benchmark test, or `NETWORK_ONLY=1` to run only network speed tests. The script will skip auto-installation of packages if you skip the corresponding tests.
 </T>

@@ -4,25 +4,60 @@ import { T } from "@/components/docs/mdx-i18n-wrapper";
 
 ## <T translationKey="docs.tests.system.title">System Information</T>
 
-- <T translationKey="docs.tests.system.cpu">
-    CPU information (model, cores, frequency)
-  </T>
-- <T translationKey="docs.tests.system.ram">
-    RAM information (total and available)
-  </T>
+<T translationKey="docs.tests.system.description">
+The script collects comprehensive system information:
+</T>
+
+- <T translationKey="docs.tests.system.cpu">CPU information (model, cores, frequency)</T>
+- <T translationKey="docs.tests.system.ram">RAM information (total and available)</T>
+- <T translationKey="docs.tests.system.swap">Swap information (total and used)</T>
+- <T translationKey="docs.tests.system.disk">Disk information (total, used, available)</T>
+- <T translationKey="docs.tests.system.load">Load average (1min, 5min, 15min)</T>
+- <T translationKey="docs.tests.system.uptime">System uptime</T>
 - <T translationKey="docs.tests.system.os">Operating system and version</T>
-- <T translationKey="docs.tests.system.virtualization">
-    Virtualization type (KVM, VMWARE, etc.)
-  </T>
+- <T translationKey="docs.tests.system.virtualization">Virtualization type (KVM, VMWARE, QEMU, etc.)</T>
+- <T translationKey="docs.tests.system.provider">Provider/datacenter (detected from IP geolocation)</T>
 
-## <T translationKey="docs.tests.performance.title">Performance</T>
+## <T translationKey="docs.tests.performance.title">Performance Tests</T>
 
-- <T translationKey="docs.tests.performance.disk">
-    Disk I/O test (dd - 1GB file, 3 rounds)
-  </T>
-- <T translationKey="docs.tests.performance.fio">
-    FIO benchmark (4k, 64k, 512k, 1M block sizes)
-  </T>
-- <T translationKey="docs.tests.performance.ioping">
-    Ioping latency test (optional)
+### <T translationKey="docs.tests.performance.disk.title">Disk I/O Test (DD)</T>
+
+<T translationKey="docs.tests.performance.disk.description">
+Sequential disk write and read speed test using dd command:
+</T>
+
+- <T translationKey="docs.tests.performance.disk.fileSize">File size: 1GB (larger than cache)</T>
+- <T translationKey="docs.tests.performance.disk.rounds">Rounds: 3 write + 3 read</T>
+- <T translationKey="docs.tests.performance.disk.directIo">Direct I/O: enabled (bypass cache)</T>
+- <T translationKey="docs.tests.performance.disk.result">Result: Average of 3 rounds</T>
+
+### <T translationKey="docs.tests.performance.fio.title">FIO Benchmark Test</T>
+
+<T translationKey="docs.tests.performance.fio.description">
+Advanced disk I/O benchmark using FIO (Flexible I/O Tester):
+</T>
+
+- <T translationKey="docs.tests.performance.fio.blockSizes">Block sizes: 4k, 64k, 512k, 1M</T>
+- <T translationKey="docs.tests.performance.fio.fileSize">File size: 500MB per test</T>
+- <T translationKey="docs.tests.performance.fio.runtime">Runtime: 30 seconds per block size</T>
+- <T translationKey="docs.tests.performance.fio.iodepth">I/O depth: 16</T>
+- <T translationKey="docs.tests.performance.fio.metrics">Metrics: Bandwidth (MB/s) and IOPS</T>
+- <T translationKey="docs.tests.performance.fio.ioping">Ioping latency test (if available)</T>
+
+<T translationKey="docs.tests.performance.fio.note">
+FIO will be automatically installed if not available and sudo is present. You can skip FIO test with `SKIP_FIO=1`.
+</T>
+
+### <T translationKey="docs.tests.performance.network.title">Network Speed Test</T>
+
+<T translationKey="docs.tests.performance.network.description">
+Network speed test using Speedtest by Ookla (CLI):
+</T>
+
+- <T translationKey="docs.tests.performance.network.servers">Multiple servers tested (VN, SG, HK, JP, US, UK, DE, etc.)</T>
+- <T translationKey="docs.tests.performance.network.metrics">Metrics: Ping (latency), Download speed, Upload speed</T>
+- <T translationKey="docs.tests.performance.network.autoInstall">Auto-install: Speedtest CLI will be installed automatically if not available (Debian/Ubuntu)</T>
+
+<T translationKey="docs.tests.performance.network.note">
+Network test can be run independently with `NETWORK_ONLY=1` option.
   </T>

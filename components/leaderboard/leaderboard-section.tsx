@@ -4,14 +4,10 @@ import React from "react";
 import Link from "next/link";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { BenchmarkTableRow } from "@/components/benchmark/benchmark-table-row";
-import type {
-  BenchmarkRunSummary,
-  BenchmarkSortBy,
-} from "@/lib/types/benchmark";
+import type { BenchmarkRunSummary } from "@/lib/types/benchmark";
 
 type LeaderboardSectionProps = {
   items: BenchmarkRunSummary[];
-  sortBy: BenchmarkSortBy;
   currentPage: number;
   totalPages: number;
   totalCount: number;
@@ -20,7 +16,6 @@ type LeaderboardSectionProps = {
 /**
  * Component hiển thị bảng leaderboard với sorting và pagination
  * @param items - mảng các benchmark items
- * @param sortBy - cách sắp xếp hiện tại
  * @param currentPage - trang hiện tại
  * @param totalPages - tổng số trang
  * @param totalCount - tổng số records
@@ -28,25 +23,14 @@ type LeaderboardSectionProps = {
  */
 export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
   items,
-  sortBy,
   currentPage,
   totalPages,
   totalCount,
 }) => {
   const { t } = useI18n();
 
-  const buildSortUrl = (newSortBy: BenchmarkSortBy) => {
-    const params = new URLSearchParams();
-    params.set("sortBy", newSortBy);
-    if (currentPage > 1) {
-      params.set("page", currentPage.toString());
-    }
-    return `/leaderboard?${params.toString()}`;
-  };
-
   const buildPageUrl = (page: number) => {
     const params = new URLSearchParams();
-    params.set("sortBy", sortBy);
     if (page > 1) {
       params.set("page", page.toString());
     }
@@ -62,30 +46,6 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
         <p className="text-sm text-muted-foreground">
           {t("leaderboard.description")}
         </p>
-      </div>
-
-      {/* Sort controls */}
-      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card/80 p-4">
-        <span className="text-xs font-medium text-muted-foreground">
-          {t("leaderboard.sortBy")}:
-        </span>
-        <div className="flex flex-wrap gap-2">
-          {(["score", "download", "ping", "date"] as BenchmarkSortBy[]).map(
-            (option) => (
-              <Link
-                key={option}
-                href={buildSortUrl(option)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                  sortBy === option
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                {t(`leaderboard.sort.${option}`)}
-              </Link>
-            )
-          )}
-        </div>
       </div>
 
       {/* Table */}

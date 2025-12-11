@@ -7,6 +7,7 @@ import { useI18n } from "@/components/i18n/i18n-provider";
 import type { Locale } from "@/lib/i18n/config";
 import { useTheme } from "@/components/theme/theme-provider";
 import { Toggle } from "@/components/ui/toggle";
+import { getBaseUrl } from "@/lib/base-url";
 
 /**
  * Component Header hiển thị brand, menu đơn giản,
@@ -16,6 +17,7 @@ import { Toggle } from "@/components/ui/toggle";
 export const Header: React.FC = () => {
   const { locale, setLocale, t } = useI18n();
   const { theme, setTheme } = useTheme();
+  const baseUrl = getBaseUrl();
 
   /**
    * Toggle language giữa VI/EN
@@ -35,13 +37,11 @@ export const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-        <Link href="/" className="flex flex-col">
-          <span className="text-sm font-semibold tracking-tight">
-            {t("header.brand")}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            VPS benchmark landing (UI preview)
-          </span>
+        <Link
+          href="/"
+          className="text-lg font-semibold tracking-tight sm:text-xl"
+        >
+          tocdovps.dev
         </Link>
         <div className="flex items-center gap-3">
           <nav className="hidden items-center gap-4 text-xs sm:flex">

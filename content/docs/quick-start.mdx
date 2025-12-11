@@ -1,16 +1,35 @@
 import { T } from "@/components/docs/mdx-i18n-wrapper";
+import { getBaseUrl } from "@/lib/base-url";
+import { CodeBlock } from "@/components/docs/mdx-code-block";
 
-# <T translationKey="docs.quickStart.title" />
+# <T translationKey="docs.quickStart.title">Quick Start</T>
 
 <T translationKey="docs.quickStart.description">
-  Run the following command on your VPS to start benchmarking:
+  Run the following command on your VPS to start comprehensive benchmarking
+  (BASE_URL tự lấy theo môi trường hiện tại):
 </T>
 
-```bash
-bash <(curl -fsSL https://tocdovps.dev/install)
-```
+<CodeBlock className="language-bash">
+  {`bash <(curl -fsSL ${getBaseUrl()}/install)`}
+</CodeBlock>
 
 <T translationKey="docs.quickStart.note">
-  The script will automatically download and run benchmark tests. You'll be
-  prompted for language and sharing preferences.
+  The script will automatically download and run benchmark tests. Estimated
+  runtime is approximately 15 minutes. You'll be prompted for sharing
+  preferences (local/private/shared).
 </T>
+
+<T translationKey="docs.quickStart.whatTests">The benchmark includes:</T>
+
+- <T translationKey="docs.quickStart.test1">
+    System information (CPU, RAM, Disk, OS, Virtualization)
+  </T>
+- <T translationKey="docs.quickStart.test2">
+    Disk I/O speed test (DD - 1GB file, 3 rounds)
+  </T>
+- <T translationKey="docs.quickStart.test3">
+    FIO benchmark test (4k, 64k, 512k, 1M block sizes)
+  </T>
+- <T translationKey="docs.quickStart.test4">
+    Network speed test (Speedtest by Ookla - multiple servers)
+  </T>

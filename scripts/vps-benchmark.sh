@@ -306,12 +306,11 @@ detect_virtualization() {
   echo "$virt_type"
 }
 
-# Detect provider/datacenter from IP geolocation
-detect_provider() {
-  local provider="Unknown"
+# Detect provider/datacenter và location từ IP geolocation
+detect_geo() {
+  local provider="Unknown" city="Unknown" region="Unknown" country="Unknown" loc="" public_ip=""
   
   # Try to get public IP
-  local public_ip
   if command_exists curl; then
     public_ip=$(curl -s --max-time 3 https://api.ipify.org 2>/dev/null || echo "")
   elif command_exists wget; then
@@ -319,19 +318,22 @@ detect_provider() {
   fi
   
   if [[ -n "$public_ip" ]]; then
-    # Try to get provider info from ipinfo.io or similar service
+    # Try to get provider/location info from ipinfo.io
     if command_exists curl; then
-      local org_info
-      org_info=$(curl -s --max-time 3 "https://ipinfo.io/${public_ip}/org" 2>/dev/null || echo "")
-      if [[ -n "$org_info" ]]; then
-        # Extract provider name (e.g., "AS12345 Leaseweb Asia")
-        provider=$(echo "$org_info" | sed 's/^AS[0-9]* //' | head -1)
+      local geo_json
+      geo_json=$(curl -s --max-time 3 "https://ipinfo.io/${public_ip}/json" 2>/dev/null || echo "")
+      if [[ -n "$geo_json" ]]; then
+        provider=$(echo "$geo_json" | grep -oP '"org":\s*"\K[^"]+' | sed 's/^AS[0-9]* //' | head -1 || echo "Unknown")
+        city=$(echo "$geo_json" | grep -oP '"city":\s*"\K[^"]+' | head -1 || echo "Unknown")
+        region=$(echo "$geo_json" | grep -oP '"region":\s*"\K[^"]+' | head -1 || echo "Unknown")
+        country=$(echo "$geo_json" | grep -oP '"country":\s*"\K[^"]+' | head -1 || echo "Unknown")
+        loc=$(echo "$geo_json" | grep -oP '"loc":\s*"\K[^"]+' | head -1 || echo "")
         [[ -z "$provider" ]] && provider="Unknown"
       fi
     fi
   fi
   
-  echo "$provider"
+  echo "$provider|$city|$region|$country|$loc|$public_ip"
 }
 
 # Test disk I/O (write and read test with 3 rounds)
@@ -1172,9 +1174,10 @@ main() {
   printf "%-18s : %s\n" "$(t 'system.virtualization')" "$virt_type"
   
   # Provider
-  local provider
-  provider=$(detect_provider)
+  local provider city region country loc public_ip
+  IFS='|' read -r provider city region country loc public_ip <<< "$(detect_geo)"
   printf "%-18s : %s\n" "$(t 'system.provider')" "$provider"
+  printf "%-18s : %s\n" "Location" "${city}, ${region}, ${country}"
   
   # Date
   printf "%-18s : %s\n" "$(t 'system.date')" "$(date '+%d/%m/%Y %H:%M:%S')"
@@ -1351,11 +1354,24 @@ _display_fio_results() {
   virt_type_escaped=$(echo "$virt_type" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
   uptime_str_escaped=$(echo "$uptime_str" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
   provider_escaped=$(echo "$provider" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  city_escaped=$(echo "$city" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  region_escaped=$(echo "$region" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  country_escaped=$(echo "$country" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  loc_escaped=$(echo "$loc" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  public_ip_escaped=$(echo "$public_ip" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
   
   local json_payload
   json_payload=$(cat <<EOF
 {
   "serverLabel": null,
+  "providerText": "${provider_escaped}",
+  "publicIp": "${public_ip_escaped}",
+  "location": {
+    "city": "${city_escaped}",
+    "region": "${region_escaped}",
+    "country": "${country_escaped}",
+    "loc": "${loc_escaped}"
+  },
   "payload": {
     "cpu": {
       "model": "${cpu_model_escaped}",

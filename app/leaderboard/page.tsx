@@ -3,10 +3,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { LeaderboardSection } from "@/components/leaderboard/leaderboard-section";
 import { db } from "@/lib/db";
-import type {
-  BenchmarkRunSummary,
-  BenchmarkSortBy,
-} from "@/lib/types/benchmark";
+import type { BenchmarkRunSummary } from "@/lib/types/benchmark";
 
 /**
  * Trang leaderboard hiển thị top benchmarks
@@ -19,19 +16,9 @@ export default async function LeaderboardPage({
   searchParams: Promise<{ sortBy?: string; page?: string }>;
 }) {
   const params = await searchParams;
-  const sortBy = (params.sortBy as BenchmarkSortBy) || "date";
   const page = parseInt(params.page || "1", 10);
   const pageSize = 50;
   const offset = (page - 1) * pageSize;
-
-  // Validate sortBy
-  const validSortBy: BenchmarkSortBy[] = [
-    "score",
-    "download",
-    "ping",
-    "date",
-  ];
-  const finalSortBy = validSortBy.includes(sortBy) ? sortBy : "date";
 
   // Query benchmarks với ORDER BY phù hợp
   type BenchmarkRow = {
@@ -48,81 +35,22 @@ export default async function LeaderboardPage({
   let totalPages = 0;
 
   try {
-    switch (finalSortBy) {
-      case "score":
-        rows = (await db/* sql */ `
-        SELECT
-          id,
-          created_at,
-          server_label,
-          avg_ping_ms,
-          download_mbps,
-          score
-        FROM benchmark_runs
-        WHERE score IS NOT NULL
-          OR download_mbps IS NOT NULL
-          OR avg_ping_ms IS NOT NULL
-        ORDER BY score DESC NULLS LAST, created_at DESC
-        LIMIT ${pageSize}
-        OFFSET ${offset}
-      `) as BenchmarkRow[];
-        break;
-      case "download":
-        rows = (await db/* sql */ `
-        SELECT
-          id,
-          created_at,
-          server_label,
-          avg_ping_ms,
-          download_mbps,
-          score
-        FROM benchmark_runs
-        WHERE score IS NOT NULL
-          OR download_mbps IS NOT NULL
-          OR avg_ping_ms IS NOT NULL
-        ORDER BY download_mbps DESC NULLS LAST, created_at DESC
-        LIMIT ${pageSize}
-        OFFSET ${offset}
-      `) as BenchmarkRow[];
-        break;
-      case "ping":
-        rows = (await db/* sql */ `
-        SELECT
-          id,
-          created_at,
-          server_label,
-          avg_ping_ms,
-          download_mbps,
-          score
-        FROM benchmark_runs
-        WHERE score IS NOT NULL
-          OR download_mbps IS NOT NULL
-          OR avg_ping_ms IS NOT NULL
-        ORDER BY avg_ping_ms ASC NULLS LAST, created_at DESC
-        LIMIT ${pageSize}
-        OFFSET ${offset}
-      `) as BenchmarkRow[];
-        break;
-      case "date":
-      default:
-        rows = (await db/* sql */ `
-        SELECT
-          id,
-          created_at,
-          server_label,
-          avg_ping_ms,
-          download_mbps,
-          score
-        FROM benchmark_runs
-        WHERE score IS NOT NULL
-          OR download_mbps IS NOT NULL
-          OR avg_ping_ms IS NOT NULL
-        ORDER BY created_at DESC
-        LIMIT ${pageSize}
-        OFFSET ${offset}
-      `) as BenchmarkRow[];
-        break;
-    }
+    rows = (await db/* sql */ `
+      SELECT
+        id,
+        created_at,
+        server_label,
+        avg_ping_ms,
+        download_mbps,
+        score
+      FROM benchmark_runs
+      WHERE score IS NOT NULL
+        OR download_mbps IS NOT NULL
+        OR avg_ping_ms IS NOT NULL
+      ORDER BY created_at DESC
+      LIMIT ${pageSize}
+      OFFSET ${offset}
+    `) as BenchmarkRow[];
 
     // Get total count for pagination
     const countRows = await db/* sql */ `
@@ -156,7 +84,6 @@ export default async function LeaderboardPage({
       <main>
         <LeaderboardSection
           items={items}
-          sortBy={finalSortBy}
           currentPage={page}
           totalPages={totalPages}
           totalCount={totalCount}
