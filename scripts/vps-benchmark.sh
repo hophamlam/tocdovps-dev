@@ -98,6 +98,50 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# Lấy codename Ubuntu (noble/jammy/...)
+get_ubuntu_codename() {
+  if [[ -r /etc/os-release ]]; then
+    grep -E '^VERSION_CODENAME=' /etc/os-release | cut -d= -f2 | tr -d '"' | tr -d "\n"
+  elif command_exists lsb_release; then
+    lsb_release -cs 2>/dev/null | tr -d "\n"
+  else
+    echo ""
+  fi
+}
+
+# Cài đặt speedtest CLI của Ookla với workaround cho Ubuntu 24.04 (noble)
+install_speedtest_ookla() {
+  if ! command_exists sudo; then
+    echo "[!] sudo not available; cannot install speedtest automatically." >&2
+    echo "[!] Please install manually: https://www.speedtest.net/apps/cli" >&2
+    return 1
+  fi
+
+  sudo apt-get update -y >/dev/null 2>&1 || true
+  sudo apt-get install -y curl >/dev/null 2>&1 || true
+
+  local codename repo_dist
+  codename=$(get_ubuntu_codename)
+  repo_dist="$codename"
+  # Workaround: noble chưa có repo chính thức, dùng jammy theo hướng dẫn Ookla
+  [[ "$codename" == "noble" || -z "$codename" ]] && repo_dist="jammy"
+
+  # shellcheck disable=SC2086
+  curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh \
+    | sudo os=ubuntu dist="$repo_dist" bash >/dev/null 2>&1 || {
+      echo "[!] Failed to add Ookla repo (dist=$repo_dist)." >&2
+      return 1
+    }
+
+  sudo apt-get install -y speedtest >/dev/null 2>&1 || {
+    echo "[!] Failed to install speedtest." >&2
+    return 1
+  }
+
+  echo "[✓] speedtest installed successfully (dist=$repo_dist)."
+  return 0
+}
+
 # ============================================================================
 # SYSTEM INFORMATION FUNCTIONS
 # ============================================================================
@@ -584,16 +628,10 @@ check_and_install_required_packages() {
   if [[ " ${packages_to_install[*]} " =~ " speedtest " ]]; then
     if [[ "$install_cmd" == "apt-get" ]]; then
       echo "[i] Installing speedtest (Ookla)..."
-      sudo apt-get install -y curl >/dev/null 2>&1 || true
-      curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash >/dev/null 2>&1 || {
-        echo "[!] Failed to add Ookla repo." >&2
-        return 1
-      }
-      sudo apt-get install -y speedtest >/dev/null 2>&1 || {
+      if ! install_speedtest_ookla; then
         echo "[!] Failed to install speedtest." >&2
         return 1
-      }
-      echo "[✓] speedtest installed successfully."
+      fi
     else
       echo "[!] speedtest auto-install only supports Debian/Ubuntu." >&2
       echo "[!] Please install manually: https://www.speedtest.net/apps/cli" >&2
@@ -970,24 +1008,13 @@ check_and_install_speedtest() {
   fi
   
   echo "[i] speedtest CLI not found. Auto-installing (Ookla repo, Debian/Ubuntu)..."
-  if ! command_exists sudo; then
-    echo "[!] sudo not available; cannot install speedtest automatically." >&2
+  if ! install_speedtest_ookla; then
     echo "[!] Please install manually:" >&2
     echo "    curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash" >&2
     echo "    sudo apt-get install speedtest" >&2
     return 1
   fi
   
-  sudo apt-get update -y >/dev/null 2>&1 || true
-  sudo apt-get install -y curl >/dev/null 2>&1 || true
-  curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash || {
-    echo "[!] Failed to add Ookla repo." >&2
-    return 1
-  }
-  sudo apt-get install -y speedtest || {
-    echo "[!] Failed to install speedtest." >&2
-    return 1
-  }
   echo "[i] speedtest installed successfully."
   return 0
 }
