@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { checkRateLimit } from "@/lib/rate-limit";
 import type { BenchmarkPayload } from "@/lib/types/benchmark";
 
 /**
@@ -134,6 +135,32 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Rate limiting check
+  const clientIp = getClientIp(request);
+  const rateLimitResult = await checkRateLimit(clientIp || "unknown");
+  
+  if (!rateLimitResult.success) {
+    const resetTime = new Date(rateLimitResult.reset).toISOString();
+    console.warn(`[API] Rate limit exceeded from ${clientIp}: ${rateLimitResult.remaining}/${rateLimitResult.limit} remaining, reset at ${resetTime}`);
+    
+    return NextResponse.json(
+      {
+        error: "Rate limit exceeded",
+        message: "Too many requests. Please try again later.",
+        retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000), // seconds
+      },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+          "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+          "X-RateLimit-Reset": rateLimitResult.reset.toString(),
+          "Retry-After": Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString(),
+        },
+      }
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -166,7 +193,6 @@ export async function POST(request: NextRequest) {
   }
 
   const data = parsed.data;
-  const clientIp = getClientIp(request);
 
   // Generate slugs từ text fields
   const osSlug = slugify(data.osNameText);
