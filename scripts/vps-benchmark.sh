@@ -311,6 +311,8 @@ detect_provider() {
         # Extract provider name (e.g., "AS12345 Leaseweb Asia")
         provider=$(echo "$org_info" | sed 's/^AS[0-9]* //' | head -1)
         [[ -z "$provider" ]] && provider="Unknown"
+        # Normalize provider name từ legal name sang brand name
+        provider=$(normalize_provider_name "$provider")
       fi
     fi
   fi
@@ -322,14 +324,30 @@ detect_provider() {
 detect_virtualization() {
   local virt_type="Bare Metal"
   
-  # Kiểm tra /sys/class/dmi/id/product_name (VMware, VirtualBox, etc.)
+  # Ưu tiên systemd-detect-virt (chính xác nhất)
+  if command_exists systemd-detect-virt; then
+    local detected
+    detected=$(systemd-detect-virt 2>/dev/null || echo "")
+    if [[ -n "$detected" ]] && [[ "$detected" != "none" ]]; then
+      virt_type=$(echo "$detected" | tr '[:lower:]' '[:upper:]')
+      # Normalize một số tên
+      case "$virt_type" in
+        "QEMU") virt_type="KVM" ;;  # QEMU thường là KVM trên VPS
+        "MICROSOFT") virt_type="Hyper-V" ;;
+      esac
+      echo "$virt_type"
+      return 0
+    fi
+  fi
+  
+  # Fallback: Kiểm tra /sys/class/dmi/id/product_name
   if [[ -r /sys/class/dmi/id/product_name ]]; then
     local product=$(cat /sys/class/dmi/id/product_name 2>/dev/null | tr '[:upper:]' '[:lower:]')
     case "$product" in
       *vmware*) virt_type="VMWARE" ;;
       *virtualbox*) virt_type="VirtualBox" ;;
       *kvm*) virt_type="KVM" ;;
-      *qemu*) virt_type="QEMU" ;;
+      *qemu*) virt_type="KVM" ;;  # QEMU thường là KVM trên VPS
       *xen*) virt_type="XEN" ;;
       *microsoft*) virt_type="Hyper-V" ;;
     esac
@@ -338,16 +356,53 @@ detect_virtualization() {
   # Kiểm tra /proc/cpuinfo cho hypervisor flag
   if grep -q "hypervisor" /proc/cpuinfo 2>/dev/null; then
     if [[ "$virt_type" == "Bare Metal" ]]; then
-      # Thử detect từ systemd
-      if command_exists systemd-detect-virt; then
-        virt_type=$(systemd-detect-virt 2>/dev/null | tr '[:lower:]' '[:upper:]' || echo "Virtualized")
-      else
-        virt_type="Virtualized"
-      fi
+      virt_type="Virtualized"
     fi
   fi
   
   echo "$virt_type"
+}
+
+# Normalize provider name từ legal name sang brand name
+normalize_provider_name() {
+  local provider="$1"
+  local normalized="$provider"
+  
+  # Map các legal names sang brand names phổ biến
+  case "$provider" in
+    *"Constant Company"*|*"Vultr"*)
+      normalized="Vultr"
+      ;;
+    *"DigitalOcean"*|*"Digital Ocean"*)
+      normalized="DigitalOcean"
+      ;;
+    *"Amazon"*|*"AWS"*)
+      normalized="Amazon Web Services"
+      ;;
+    *"Google"*|*"GCP"*)
+      normalized="Google Cloud Platform"
+      ;;
+    *"Microsoft"*|*"Azure"*)
+      normalized="Microsoft Azure"
+      ;;
+    *"Linode"*|*"Akamai"*)
+      normalized="Akamai (Linode)"
+      ;;
+    *"Hetzner"*)
+      normalized="Hetzner"
+      ;;
+    *"OVH"*)
+      normalized="OVHcloud"
+      ;;
+    *"Contabo"*)
+      normalized="Contabo"
+      ;;
+    *"Oracle"*)
+      normalized="Oracle Cloud"
+      ;;
+  esac
+  
+  echo "$normalized"
 }
 
 # Detect provider/datacenter và location từ IP geolocation
@@ -373,6 +428,8 @@ detect_geo() {
         country=$(echo "$geo_json" | grep -oP '"country":\s*"\K[^"]+' | head -1 || echo "Unknown")
         loc=$(echo "$geo_json" | grep -oP '"loc":\s*"\K[^"]+' | head -1 || echo "")
         [[ -z "$provider" ]] && provider="Unknown"
+        # Normalize provider name từ legal name sang brand name
+        provider=$(normalize_provider_name "$provider")
       fi
     fi
   fi
