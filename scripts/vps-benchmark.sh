@@ -1265,8 +1265,14 @@ main() {
   printf "%-18s : %.2f, %.2f, %.2f (1min, 5min, 15min)\n" "$(t 'system.load')" "$load_1min" "$load_5min" "$load_15min"
   
   # Uptime
-  local uptime_str
+  local uptime_str uptime_seconds
   uptime_str=$(get_uptime)
+  # Tính uptime_seconds từ /proc/uptime cho API
+  if [[ -r /proc/uptime ]]; then
+    uptime_seconds=$(awk '{print int($1)}' /proc/uptime 2>/dev/null || echo "0")
+  else
+    uptime_seconds="0"
+  fi
   printf "%-18s : %s\n" "$(t 'system.uptime')" "$uptime_str"
   
   # OS Info
@@ -1485,6 +1491,19 @@ _display_fio_results() {
   json_payload=$(cat <<EOF
 {
   "serverLabel": null,
+  "cpuModelText": "${cpu_model_escaped}",
+  "coreAmount": ${cpu_cores:-1},
+  "frequencyGhz": ${cpu_freq:-0},
+  "ramGb": ${ram_total:-0},
+  "ramAvailableGb": ${ram_available:-0},
+  "ramInfo": "${ram_total:-0} GB (Available: ${ram_available:-0} GB)",
+  "swapInfo": "${swap_total:-0} GB (Used: ${swap_used:-0} GB)",
+  "diskGb": ${disk_total:-0},
+  "diskInfo": "${disk_total:-0} GB (Used: ${disk_used:-0} GB, Available: ${disk_available:-0} GB)",
+  "loadAverage": "${load_1min:-0}, ${load_5min:-0}, ${load_15min:-0}",
+  "uptimeSeconds": ${uptime_seconds:-0},
+  "osNameText": "${os_name_escaped}",
+  "virtualizationText": "${virt_type_escaped}",
   "providerText": "${provider_escaped}",
   "publicIp": "${public_ip_escaped}",
   "location": {
