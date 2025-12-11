@@ -1121,13 +1121,18 @@ send_report_if_configured() {
   echo "[i] Sending benchmark report to API..."
 
   # Gửi JSON payload kèm header X-VISIBILITY (không cần token nữa)
-  local response
-  response=$(curl -s -X POST "$report_url" \
+  local response http_code
+  response=$(curl -s -w "\n%{http_code}" -X POST "$report_url" \
     -H "Content-Type: application/json" \
     -H "X-VISIBILITY: $visibility" \
     -d "$json_payload" 2>&1)
   
-  if [[ $? -eq 0 ]]; then
+  # Tách HTTP code từ response (dòng cuối cùng)
+  http_code=$(echo "$response" | tail -n1)
+  response=$(echo "$response" | sed '$d')
+  
+  # Debug: hiển thị response nếu có lỗi
+  if [[ "$http_code" -ge 200 ]] && [[ "$http_code" -lt 300 ]]; then
     # Parse response để lấy result URL nếu có
     local result_id result_url
     result_id=$(echo "$response" | grep -o '"id":"[^"]*"' | cut -d'"' -f4 || echo "")
@@ -1149,7 +1154,14 @@ send_report_if_configured() {
   else
     echo
     echo "[!] $(t 'error.failed_send')"
-    echo "    Error: $response"
+    echo "    HTTP Status: $http_code"
+    echo "    Response: $response"
+    # Debug: hiển thị payload snippet nếu có lỗi validation
+    if [[ "$http_code" -eq 400 ]]; then
+      echo "    [Debug] Payload preview (first 500 chars):"
+      echo "$json_payload" | head -c 500
+      echo ""
+    fi
   fi
 }
 

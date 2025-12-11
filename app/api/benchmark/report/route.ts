@@ -55,17 +55,9 @@ const reportSchema = z.object({
   diskIo: z.unknown().optional(),
   fio: z.unknown().optional(),
   netSpeed: z.unknown().optional(),
-  payload: z
-    .object({
-      pingTargets: z.array(z.string()).min(1).max(50),
-      avgPingMs: z.number().nonnegative(),
-      download: z.object({
-        url: z.string().url().max(2048),
-        timeSeconds: z.number().nonnegative(),
-        speedMbps: z.number().nonnegative(),
-      }),
-    })
-    .catchall(z.unknown()) as z.ZodType<BenchmarkPayload>, // lưu thô vào raw_payload với type an toàn
+  // payload có thể là network test payload hoặc system info payload
+  // Cho phép bất kỳ structure nào để linh hoạt
+  payload: z.unknown().optional(),
 });
 
 /**
@@ -80,7 +72,7 @@ const getClientIp = (request: NextRequest): string | null => {
     // x-forwarded-for có thể chứa nhiều IPs, lấy IP đầu tiên
     return ipHeader.split(",")[0]?.trim() || null;
   }
-  
+
   // Fallback cho các headers khác
   return (
     request.headers.get("x-real-ip") ||
@@ -91,7 +83,7 @@ const getClientIp = (request: NextRequest): string | null => {
 
 /**
  * API nhận báo cáo benchmark từ script/CLI
- * 
+ *
  * Features:
  * - Validate payload với Zod schema
  * - Lưu toàn bộ payload vào bảng benchmark_runs (cột raw_payload)
@@ -99,24 +91,26 @@ const getClientIp = (request: NextRequest): string | null => {
  * - Hỗ trợ visibility header (private/shared)
  * - Error handling và logging
  * - Request size validation
- * 
+ *
  * @param request - NextRequest object chứa benchmark report data
  * @returns JSON response với id và created_at của record mới
  */
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  
+
   // Log request info (không log sensitive data)
   const userAgent = request.headers.get("user-agent") || "unknown";
   const contentType = request.headers.get("content-type") || "";
-  
+
   // Validate Content-Type
   if (!contentType.includes("application/json")) {
-    console.warn(`[API] Invalid Content-Type: ${contentType} from ${getClientIp(request)}`);
+    console.warn(
+      `[API] Invalid Content-Type: ${contentType} from ${getClientIp(request)}`
+    );
     return NextResponse.json(
-      { 
+      {
         error: "Invalid Content-Type",
-        message: "Content-Type must be application/json"
+        message: "Content-Type must be application/json",
       },
       { status: 400 }
     );
@@ -125,11 +119,17 @@ export async function POST(request: NextRequest) {
   // Validate request size
   const contentLength = request.headers.get("content-length");
   if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_SIZE) {
-    console.warn(`[API] Request too large: ${contentLength} bytes from ${getClientIp(request)}`);
+    console.warn(
+      `[API] Request too large: ${contentLength} bytes from ${getClientIp(
+        request
+      )}`
+    );
     return NextResponse.json(
-      { 
+      {
         error: "Request too large",
-        message: `Request body must be less than ${MAX_REQUEST_SIZE / 1024 / 1024}MB`
+        message: `Request body must be less than ${
+          MAX_REQUEST_SIZE / 1024 / 1024
+        }MB`,
       },
       { status: 413 }
     );
@@ -138,11 +138,13 @@ export async function POST(request: NextRequest) {
   // Rate limiting check
   const clientIp = getClientIp(request);
   const rateLimitResult = await checkRateLimit(clientIp || "unknown");
-  
+
   if (!rateLimitResult.success) {
     const resetTime = new Date(rateLimitResult.reset).toISOString();
-    console.warn(`[API] Rate limit exceeded from ${clientIp}: ${rateLimitResult.remaining}/${rateLimitResult.limit} remaining, reset at ${resetTime}`);
-    
+    console.warn(
+      `[API] Rate limit exceeded from ${clientIp}: ${rateLimitResult.remaining}/${rateLimitResult.limit} remaining, reset at ${resetTime}`
+    );
+
     return NextResponse.json(
       {
         error: "Rate limit exceeded",
@@ -155,7 +157,9 @@ export async function POST(request: NextRequest) {
           "X-RateLimit-Limit": rateLimitResult.limit.toString(),
           "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
           "X-RateLimit-Reset": rateLimitResult.reset.toString(),
-          "Retry-After": Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString(),
+          "Retry-After": Math.ceil(
+            (rateLimitResult.reset - Date.now()) / 1000
+          ).toString(),
         },
       }
     );
@@ -165,12 +169,16 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error(`[API] JSON parse error from ${getClientIp(request)}:`, errorMessage);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    console.error(
+      `[API] JSON parse error from ${getClientIp(request)}:`,
+      errorMessage
+    );
     return NextResponse.json(
-      { 
+      {
         error: "Invalid JSON payload",
-        message: "Request body must be valid JSON"
+        message: "Request body must be valid JSON",
       },
       { status: 400 }
     );
@@ -180,13 +188,29 @@ export async function POST(request: NextRequest) {
   const parsed = reportSchema.safeParse(body);
   if (!parsed.success) {
     const errorDetails = parsed.error.flatten();
-    console.warn(`[API] Validation error from ${getClientIp(request)}:`, errorDetails.fieldErrors);
-    
+    console.warn(
+      `[API] Validation error from ${getClientIp(request)}:`,
+      errorDetails.fieldErrors
+    );
+    // Debug: log body structure để debug
+    console.warn(`[API] Body keys:`, Object.keys(body || {}));
+    console.warn(
+      `[API] Body has payload:`,
+      body && typeof body === "object" && body !== null && "payload" in body
+    );
+    if (body && typeof body === "object" && "payload" in body) {
+      console.warn(`[API] Payload type:`, typeof body.payload);
+      console.warn(
+        `[API] Payload keys:`,
+        body.payload ? Object.keys(body.payload) : "null"
+      );
+    }
+
     return NextResponse.json(
-      { 
+      {
         error: "Invalid payload",
         message: "Request validation failed",
-        details: errorDetails.fieldErrors
+        details: errorDetails.fieldErrors,
       },
       { status: 400 }
     );
@@ -277,7 +301,9 @@ export async function POST(request: NextRequest) {
     `;
 
     const responseTime = Date.now() - startTime;
-    console.log(`[API] Success: Created benchmark run ${row.id} in ${responseTime}ms from ${clientIp}`);
+    console.log(
+      `[API] Success: Created benchmark run ${row.id} in ${responseTime}ms from ${clientIp}`
+    );
 
     return NextResponse.json(
       {
@@ -285,17 +311,18 @@ export async function POST(request: NextRequest) {
         id: row.id,
         createdAt: row.created_at,
       },
-      { 
+      {
         status: 201,
         headers: {
           "X-Response-Time": `${responseTime}ms`,
-        }
+        },
       }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown database error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown database error";
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
+
     console.error(`[API] Database error from ${clientIp}:`, {
       message: errorMessage,
       stack: errorStack,
@@ -303,9 +330,9 @@ export async function POST(request: NextRequest) {
 
     // Không expose internal error details cho client
     return NextResponse.json(
-      { 
+      {
         error: "Failed to store benchmark report",
-        message: "An internal error occurred. Please try again later."
+        message: "An internal error occurred. Please try again later.",
       },
       { status: 500 }
     );
