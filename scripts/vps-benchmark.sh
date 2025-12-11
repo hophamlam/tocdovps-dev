@@ -320,22 +320,24 @@ detect_provider() {
   echo "$provider"
 }
 
-# Detect virtualization type
+# Detect virtualization type (trả về original|normalized)
 detect_virtualization() {
-  local virt_type="Bare Metal"
+  local virt_original="Bare Metal"
+  local virt_normalized="Bare Metal"
   
   # Ưu tiên systemd-detect-virt (chính xác nhất)
   if command_exists systemd-detect-virt; then
     local detected
     detected=$(systemd-detect-virt 2>/dev/null || echo "")
     if [[ -n "$detected" ]] && [[ "$detected" != "none" ]]; then
-      virt_type=$(echo "$detected" | tr '[:lower:]' '[:upper:]')
+      virt_original=$(echo "$detected" | tr '[:lower:]' '[:upper:]')
+      virt_normalized="$virt_original"
       # Normalize một số tên
-      case "$virt_type" in
-        "QEMU") virt_type="KVM" ;;  # QEMU thường là KVM trên VPS
-        "MICROSOFT") virt_type="Hyper-V" ;;
+      case "$virt_normalized" in
+        "QEMU") virt_normalized="KVM" ;;  # QEMU thường là KVM trên VPS
+        "MICROSOFT") virt_normalized="Hyper-V" ;;
       esac
-      echo "$virt_type"
+      echo "${virt_original}|${virt_normalized}"
       return 0
     fi
   fi
@@ -344,23 +346,42 @@ detect_virtualization() {
   if [[ -r /sys/class/dmi/id/product_name ]]; then
     local product=$(cat /sys/class/dmi/id/product_name 2>/dev/null | tr '[:upper:]' '[:lower:]')
     case "$product" in
-      *vmware*) virt_type="VMWARE" ;;
-      *virtualbox*) virt_type="VirtualBox" ;;
-      *kvm*) virt_type="KVM" ;;
-      *qemu*) virt_type="KVM" ;;  # QEMU thường là KVM trên VPS
-      *xen*) virt_type="XEN" ;;
-      *microsoft*) virt_type="Hyper-V" ;;
+      *vmware*)
+        virt_original="VMWARE"
+        virt_normalized="VMWARE"
+        ;;
+      *virtualbox*)
+        virt_original="VirtualBox"
+        virt_normalized="VirtualBox"
+        ;;
+      *kvm*)
+        virt_original="KVM"
+        virt_normalized="KVM"
+        ;;
+      *qemu*)
+        virt_original="QEMU"
+        virt_normalized="KVM"  # QEMU thường là KVM trên VPS
+        ;;
+      *xen*)
+        virt_original="XEN"
+        virt_normalized="XEN"
+        ;;
+      *microsoft*)
+        virt_original="MICROSOFT"
+        virt_normalized="Hyper-V"
+        ;;
     esac
   fi
   
   # Kiểm tra /proc/cpuinfo cho hypervisor flag
   if grep -q "hypervisor" /proc/cpuinfo 2>/dev/null; then
-    if [[ "$virt_type" == "Bare Metal" ]]; then
-      virt_type="Virtualized"
+    if [[ "$virt_original" == "Bare Metal" ]]; then
+      virt_original="Virtualized"
+      virt_normalized="Virtualized"
     fi
   fi
   
-  echo "$virt_type"
+  echo "${virt_original}|${virt_normalized}"
 }
 
 # Normalize provider name từ legal name sang brand name
@@ -406,8 +427,10 @@ normalize_provider_name() {
 }
 
 # Detect provider/datacenter và location từ IP geolocation
+# Trả về: provider_original|provider_normalized|city|region|country|loc|public_ip
 detect_geo() {
-  local provider="Unknown" city="Unknown" region="Unknown" country="Unknown" loc="" public_ip=""
+  local provider_original="Unknown" provider_normalized="Unknown"
+  local city="Unknown" region="Unknown" country="Unknown" loc="" public_ip=""
   
   # Try to get public IP
   if command_exists curl; then
@@ -422,19 +445,19 @@ detect_geo() {
       local geo_json
       geo_json=$(curl -s --max-time 3 "https://ipinfo.io/${public_ip}/json" 2>/dev/null || echo "")
       if [[ -n "$geo_json" ]]; then
-        provider=$(echo "$geo_json" | grep -oP '"org":\s*"\K[^"]+' | sed 's/^AS[0-9]* //' | head -1 || echo "Unknown")
+        provider_original=$(echo "$geo_json" | grep -oP '"org":\s*"\K[^"]+' | sed 's/^AS[0-9]* //' | head -1 || echo "Unknown")
         city=$(echo "$geo_json" | grep -oP '"city":\s*"\K[^"]+' | head -1 || echo "Unknown")
         region=$(echo "$geo_json" | grep -oP '"region":\s*"\K[^"]+' | head -1 || echo "Unknown")
         country=$(echo "$geo_json" | grep -oP '"country":\s*"\K[^"]+' | head -1 || echo "Unknown")
         loc=$(echo "$geo_json" | grep -oP '"loc":\s*"\K[^"]+' | head -1 || echo "")
-        [[ -z "$provider" ]] && provider="Unknown"
+        [[ -z "$provider_original" ]] && provider_original="Unknown"
         # Normalize provider name từ legal name sang brand name
-        provider=$(normalize_provider_name "$provider")
+        provider_normalized=$(normalize_provider_name "$provider_original")
       fi
     fi
   fi
   
-  echo "$provider|$city|$region|$country|$loc|$public_ip"
+  echo "${provider_original}|${provider_normalized}|$city|$region|$country|$loc|$public_ip"
 }
 
 # Test disk I/O (write and read test with 3 rounds)
@@ -1253,15 +1276,29 @@ main() {
   printf "%-18s : %s - %s\n" "$(t 'system.os')" "$os_name" "$os_version"
   
   # Virtualization
-  local virt_type
-  virt_type=$(detect_virtualization)
-  printf "%-18s : %s\n" "$(t 'system.virtualization')" "$virt_type"
+  local virt_original virt_normalized virt_display
+  IFS='|' read -r virt_original virt_normalized <<< "$(detect_virtualization)"
+  if [[ "$virt_original" == "$virt_normalized" ]]; then
+    virt_display="$virt_normalized"
+  else
+    virt_display="${virt_original} (${virt_normalized})"
+  fi
+  printf "%-18s : %s\n" "$(t 'system.virtualization')" "$virt_display"
   
   # Provider
-  local provider city region country loc public_ip
-  IFS='|' read -r provider city region country loc public_ip <<< "$(detect_geo)"
-  printf "%-18s : %s\n" "$(t 'system.provider')" "$provider"
+  local provider_original provider_normalized provider_display city region country loc public_ip
+  IFS='|' read -r provider_original provider_normalized city region country loc public_ip <<< "$(detect_geo)"
+  if [[ "$provider_original" == "$provider_normalized" ]]; then
+    provider_display="$provider_normalized"
+  else
+    provider_display="${provider_original} (${provider_normalized})"
+  fi
+  printf "%-18s : %s\n" "$(t 'system.provider')" "$provider_display"
   printf "%-18s : %s\n" "Location" "${city}, ${region}, ${country}"
+  
+  # Set normalized values cho JSON payload (dùng normalized cho API)
+  provider="$provider_normalized"
+  virt_type="$virt_normalized"
   
   # Date
   printf "%-18s : %s\n" "$(t 'system.date')" "$(date '+%d/%m/%Y %H:%M:%S')"
