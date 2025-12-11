@@ -1,0 +1,96 @@
+name: Test API on Preview Deployment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: 'Preview URL to test'
+        required: true
+
+jobs:
+  test-api:
+    name: Test API Endpoints
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Wait for Vercel Preview Deployment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        id: wait-for-preview
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Tìm comment từ Vercel bot với preview URL
+            const vercelComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('vercel.app')
+            );
+            
+            if (vercelComment) {
+              // Extract URL từ comment
+              const urlMatch = vercelComment.body.match(/https:\/\/[^\s]+\.vercel\.app/);
+              if (urlMatch) {
+                core.setOutput('preview_url', urlMatch[0]);
+                return;
+              }
+            }
+            
+            // Nếu chưa có, đợi một chút và retry
+            await new Promise(resolve => setTimeout(resolve, 30000));
+            core.setOutput('preview_url', '');
+            core.setOutput('timeout', 'true');
+
+      - name: Get Preview URL
+        id: get-url
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "preview_url=${{ github.event.inputs.preview_url }}" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.wait-for-preview.outputs.preview_url }}" != "" ]; then
+            echo "preview_url=${{ steps.wait-for-preview.outputs.preview_url }}" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Preview URL not found. Please test manually."
+            exit 1
+          fi
+
+      - name: Test API Endpoints
+        run: |
+          PREVIEW_URL="${{ steps.get-url.outputs.preview_url }}"
+          echo "🧪 Testing API at: $PREVIEW_URL"
+          npm run test:api -- "$PREVIEW_URL"
+
+      - name: Comment PR with Test Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const testResults = '✅ API tests completed successfully!';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🧪 API Test Results\n\n${testResults}\n\nPreview URL: ${{ steps.get-url.outputs.preview_url }}`
+            });
+
+
+

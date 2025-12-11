@@ -3,7 +3,18 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import type { BenchmarkPayload } from "@/lib/types/benchmark";
 
-const slugify = (value?: string | null) => {
+/**
+ * Giới hạn kích thước request body (10MB)
+ * Tránh DoS attacks và memory issues
+ */
+const MAX_REQUEST_SIZE = 10 * 1024 * 1024; // 10MB
+
+/**
+ * Chuyển đổi text thành slug để dùng trong URL và query
+ * @param value - Giá trị cần slugify
+ * @returns Slug string hoặc null nếu value rỗng
+ */
+const slugify = (value?: string | null): string | null => {
   if (!value) return null;
   return value
     .toLowerCase()
@@ -13,6 +24,10 @@ const slugify = (value?: string | null) => {
     .slice(0, 128);
 };
 
+/**
+ * Schema validation cho benchmark report payload
+ * Sử dụng Zod để validate type-safe
+ */
 const reportSchema = z.object({
   // Cho phép serverLabel là string hoặc null và có thể không gửi lên
   serverLabel: z.string().max(255).nullish(),
@@ -25,11 +40,11 @@ const reportSchema = z.object({
   frequencyGhz: z.number().nonnegative().optional(),
   ramGb: z.number().nonnegative().optional(),
   ramAvailableGb: z.number().nonnegative().optional(),
-  ramInfo: z.string().optional(),
-  swapInfo: z.string().optional(),
+  ramInfo: z.string().max(1000).optional(),
+  swapInfo: z.string().max(1000).optional(),
   diskGb: z.number().nonnegative().optional(),
-  diskInfo: z.string().optional(),
-  loadAverage: z.string().optional(),
+  diskInfo: z.string().max(1000).optional(),
+  loadAverage: z.string().max(255).optional(),
   uptimeSeconds: z.number().int().nonnegative().optional(),
   osNameText: z.string().max(255).optional(),
   virtualizationText: z.string().max(255).optional(),
@@ -41,10 +56,10 @@ const reportSchema = z.object({
   netSpeed: z.unknown().optional(),
   payload: z
     .object({
-      pingTargets: z.array(z.string()),
+      pingTargets: z.array(z.string()).min(1).max(50),
       avgPingMs: z.number().nonnegative(),
       download: z.object({
-        url: z.string().url(),
+        url: z.string().url().max(2048),
         timeSeconds: z.number().nonnegative(),
         speedMbps: z.number().nonnegative(),
       }),
@@ -53,38 +68,107 @@ const reportSchema = z.object({
 });
 
 /**
+ * Lấy client IP từ request headers
+ * Hỗ trợ x-forwarded-for header từ Vercel/proxy
+ * @param request - NextRequest object
+ * @returns Client IP address hoặc null
+ */
+const getClientIp = (request: NextRequest): string | null => {
+  const ipHeader = request.headers.get("x-forwarded-for");
+  if (ipHeader) {
+    // x-forwarded-for có thể chứa nhiều IPs, lấy IP đầu tiên
+    return ipHeader.split(",")[0]?.trim() || null;
+  }
+  
+  // Fallback cho các headers khác
+  return (
+    request.headers.get("x-real-ip") ||
+    request.headers.get("cf-connecting-ip") ||
+    null
+  );
+};
+
+/**
  * API nhận báo cáo benchmark từ script/CLI
- * - Yêu cầu header X-REPORT-TOKEN khớp với REPORT_TOKEN trong env
+ * 
+ * Features:
+ * - Validate payload với Zod schema
  * - Lưu toàn bộ payload vào bảng benchmark_runs (cột raw_payload)
  * - Chỉ sử dụng một số field tóm tắt để query nhanh (avg_ping_ms, download_mbps, score, server_label)
+ * - Hỗ trợ visibility header (private/shared)
+ * - Error handling và logging
+ * - Request size validation
+ * 
+ * @param request - NextRequest object chứa benchmark report data
+ * @returns JSON response với id và created_at của record mới
  */
 export async function POST(request: NextRequest) {
-  // Endpoint không cần bảo vệ - public access
-  // Đã được expose qua ngrok, không cần token authentication
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
+  const startTime = Date.now();
+  
+  // Log request info (không log sensitive data)
+  const userAgent = request.headers.get("user-agent") || "unknown";
+  const contentType = request.headers.get("content-type") || "";
+  
+  // Validate Content-Type
+  if (!contentType.includes("application/json")) {
+    console.warn(`[API] Invalid Content-Type: ${contentType} from ${getClientIp(request)}`);
     return NextResponse.json(
-      { error: "Invalid JSON payload" },
+      { 
+        error: "Invalid Content-Type",
+        message: "Content-Type must be application/json"
+      },
       { status: 400 }
     );
   }
 
+  // Validate request size
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_SIZE) {
+    console.warn(`[API] Request too large: ${contentLength} bytes from ${getClientIp(request)}`);
+    return NextResponse.json(
+      { 
+        error: "Request too large",
+        message: `Request body must be less than ${MAX_REQUEST_SIZE / 1024 / 1024}MB`
+      },
+      { status: 413 }
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[API] JSON parse error from ${getClientIp(request)}:`, errorMessage);
+    return NextResponse.json(
+      { 
+        error: "Invalid JSON payload",
+        message: "Request body must be valid JSON"
+      },
+      { status: 400 }
+    );
+  }
+
+  // Validate payload với Zod schema
   const parsed = reportSchema.safeParse(body);
   if (!parsed.success) {
+    const errorDetails = parsed.error.flatten();
+    console.warn(`[API] Validation error from ${getClientIp(request)}:`, errorDetails.fieldErrors);
+    
     return NextResponse.json(
-      { error: "Invalid payload", details: parsed.error.flatten() },
+      { 
+        error: "Invalid payload",
+        message: "Request validation failed",
+        details: errorDetails.fieldErrors
+      },
       { status: 400 }
     );
   }
 
   const data = parsed.data;
+  const clientIp = getClientIp(request);
 
-  const ipHeader = request.headers.get("x-forwarded-for");
-  const ip = ipHeader ? ipHeader.split(",")[0]?.trim() : null;
-
+  // Generate slugs từ text fields
   const osSlug = slugify(data.osNameText);
   const cpuSlug = slugify(data.cpuModelText);
   const providerSlug = slugify(data.providerText);
@@ -95,6 +179,7 @@ export async function POST(request: NextRequest) {
   const visibility = visibilityHeader === "private" ? "private" : "shared";
 
   try {
+    // Insert vào database
     const [row] = await db/* sql */ `
       INSERT INTO benchmark_runs (
         source_ip,
@@ -130,8 +215,8 @@ export async function POST(request: NextRequest) {
         visibility
       )
       VALUES (
-        ${ip},
-        ${ip},
+        ${clientIp},
+        ${clientIp},
         ${data.serverLabel ?? null},
         ${data.avgPingMs ?? null},
         ${data.downloadMbps ?? null},
@@ -165,17 +250,37 @@ export async function POST(request: NextRequest) {
       RETURNING id, created_at;
     `;
 
+    const responseTime = Date.now() - startTime;
+    console.log(`[API] Success: Created benchmark run ${row.id} in ${responseTime}ms from ${clientIp}`);
+
     return NextResponse.json(
       {
+        success: true,
         id: row.id,
         createdAt: row.created_at,
       },
-      { status: 201 }
+      { 
+        status: 201,
+        headers: {
+          "X-Response-Time": `${responseTime}ms`,
+        }
+      }
     );
   } catch (error) {
-    console.error("Failed to insert benchmark run", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown database error";
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    console.error(`[API] Database error from ${clientIp}:`, {
+      message: errorMessage,
+      stack: errorStack,
+    });
+
+    // Không expose internal error details cho client
     return NextResponse.json(
-      { error: "Failed to store benchmark report" },
+      { 
+        error: "Failed to store benchmark report",
+        message: "An internal error occurred. Please try again later."
+      },
       { status: 500 }
     );
   }

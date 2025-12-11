@@ -356,10 +356,8 @@ run_disk_io_test() {
     local start_time end_time round_time round_speed_mbs
     start_time=$(date +%s.%N)
     
-    # Ghi 1GB vào /tmp (bypass cache với direct I/O)
-    dd if=/dev/zero of="${test_file}_${round}" bs=1M count=1024 oflag=direct >/dev/null 2>&1
-    
-    if [[ $? -eq 0 ]]; then
+    # Thử direct I/O trước (bypass cache), nếu fail thì fallback về normal I/O
+    if dd if=/dev/zero of="${test_file}_${round}" bs=1M count=1024 oflag=direct >/dev/null 2>&1; then
       end_time=$(date +%s.%N)
       round_time=$(awk -v start="$start_time" -v end="$end_time" 'BEGIN { printf "%.2f", end - start }')
       
@@ -370,7 +368,21 @@ run_disk_io_test() {
         write_rounds+=("0")
       fi
     else
-      write_rounds+=("0")
+      # Fallback: normal I/O (không bypass cache)
+      start_time=$(date +%s.%N)
+      if dd if=/dev/zero of="${test_file}_${round}" bs=1M count=1024 >/dev/null 2>&1; then
+        end_time=$(date +%s.%N)
+        round_time=$(awk -v start="$start_time" -v end="$end_time" 'BEGIN { printf "%.2f", end - start }')
+        
+        if (( $(echo "$round_time > 0" | bc -l 2>/dev/null || echo 0) )); then
+          round_speed_mbs=$(awk -v bytes="$bytes_written" -v time="$round_time" 'BEGIN { printf "%.2f", (bytes / 1048576) / time }')
+          write_rounds+=("$round_speed_mbs")
+        else
+          write_rounds+=("0")
+        fi
+      else
+        write_rounds+=("0")
+      fi
     fi
     
     # Clean up test file for this round
@@ -379,17 +391,23 @@ run_disk_io_test() {
   
   # Test read speed - 3 rounds (need to create file first)
   local read_test_file="${test_file}_read"
-  dd if=/dev/zero of="$read_test_file" bs=1M count=1024 oflag=direct >/dev/null 2>&1
+  # Thử tạo file với direct I/O, nếu fail thì fallback
+  if ! dd if=/dev/zero of="$read_test_file" bs=1M count=1024 oflag=direct >/dev/null 2>&1; then
+    # Fallback: normal I/O
+    dd if=/dev/zero of="$read_test_file" bs=1M count=1024 >/dev/null 2>&1 || {
+      read_rounds=("0" "0" "0")
+      echo "0|0|0|0|0|0|0|0|0|0|0|0|0|0"
+      return 0
+    }
+  fi
   
   if [[ -f "$read_test_file" ]]; then
     for round in 1 2 3; do
       local start_time end_time round_time round_speed_mbs
       start_time=$(date +%s.%N)
       
-      # Đọc 1GB từ file (bypass cache với direct I/O)
-      dd if="$read_test_file" of=/dev/null bs=1M count=1024 iflag=direct >/dev/null 2>&1
-      
-      if [[ $? -eq 0 ]]; then
+      # Thử direct I/O trước, nếu fail thì fallback
+      if dd if="$read_test_file" of=/dev/null bs=1M count=1024 iflag=direct >/dev/null 2>&1; then
         end_time=$(date +%s.%N)
         round_time=$(awk -v start="$start_time" -v end="$end_time" 'BEGIN { printf "%.2f", end - start }')
         
@@ -400,7 +418,21 @@ run_disk_io_test() {
           read_rounds+=("0")
         fi
       else
-        read_rounds+=("0")
+        # Fallback: normal I/O
+        start_time=$(date +%s.%N)
+        if dd if="$read_test_file" of=/dev/null bs=1M count=1024 >/dev/null 2>&1; then
+          end_time=$(date +%s.%N)
+          round_time=$(awk -v start="$start_time" -v end="$end_time" 'BEGIN { printf "%.2f", end - start }')
+          
+          if (( $(echo "$round_time > 0" | bc -l 2>/dev/null || echo 0) )); then
+            round_speed_mbs=$(awk -v bytes="$bytes_written" -v time="$round_time" 'BEGIN { printf "%.2f", (bytes / 1048576) / time }')
+            read_rounds+=("$round_speed_mbs")
+          else
+            read_rounds+=("0")
+          fi
+        else
+          read_rounds+=("0")
+        fi
       fi
     done
     
@@ -450,13 +482,13 @@ check_and_install_fio() {
   if [[ $EUID -eq 0 ]] || command_exists sudo; then
     echo "$(t 'fio.installing')"
     if command_exists apt-get; then
-      (apt-get update >/dev/null 2>&1 && apt-get install -y fio >/dev/null 2>&1) || return 1
+      (sudo apt-get update >/dev/null 2>&1 && sudo apt-get install -y fio >/dev/null 2>&1) || return 1
     elif command_exists yum; then
-      (yum install -y fio >/dev/null 2>&1) || return 1
+      (sudo yum install -y fio >/dev/null 2>&1) || return 1
     elif command_exists dnf; then
-      (dnf install -y fio >/dev/null 2>&1) || return 1
+      (sudo dnf install -y fio >/dev/null 2>&1) || return 1
     elif command_exists pacman; then
-      (pacman -Sy --noconfirm fio >/dev/null 2>&1) || return 1
+      (sudo pacman -Sy --noconfirm fio >/dev/null 2>&1) || return 1
     else
       return 1
     fi
@@ -464,6 +496,109 @@ check_and_install_fio() {
   fi
   
   return 1
+}
+
+# Check và install các packages cần thiết ngay từ đầu
+check_and_install_required_packages() {
+  local packages_to_install=()
+  local needs_sudo=false
+  
+  # Check sudo availability
+  if [[ $EUID -ne 0 ]] && ! command_exists sudo; then
+    echo "[!] sudo not available. Some packages may not be installed automatically." >&2
+    echo "[!] Please install manually: fio, speedtest (Ookla)" >&2
+    echo "[!] See documentation: https://tocdovps.dev/docs" >&2
+    return 1
+  fi
+  
+  # Check FIO
+  if ! command_exists fio; then
+    packages_to_install+=("fio")
+  fi
+  
+  # Check speedtest
+  if ! command_exists speedtest; then
+    packages_to_install+=("speedtest")
+  fi
+  
+  # Nếu không có package nào cần install, return
+  if [[ ${#packages_to_install[@]} -eq 0 ]]; then
+    return 0
+  fi
+  
+  # Thông báo packages sẽ được install
+  echo
+  echo "[i] The following packages will be installed automatically:"
+  for pkg in "${packages_to_install[@]}"; do
+    echo "    - $pkg"
+  done
+  echo "[i] For more information, see: https://tocdovps.dev/docs"
+  echo
+  
+  # Install packages
+  local install_cmd=""
+  if command_exists apt-get; then
+    install_cmd="apt-get"
+    sudo apt-get update -y >/dev/null 2>&1 || true
+  elif command_exists yum; then
+    install_cmd="yum"
+  elif command_exists dnf; then
+    install_cmd="dnf"
+  elif command_exists pacman; then
+    install_cmd="pacman"
+  else
+    echo "[!] Unsupported package manager. Please install manually." >&2
+    return 1
+  fi
+  
+  # Install FIO
+  if [[ " ${packages_to_install[*]} " =~ " fio " ]]; then
+    echo "[i] Installing fio..."
+    if [[ "$install_cmd" == "apt-get" ]]; then
+      sudo apt-get install -y fio >/dev/null 2>&1 || {
+        echo "[!] Failed to install fio." >&2
+        return 1
+      }
+    elif [[ "$install_cmd" == "yum" ]]; then
+      sudo yum install -y fio >/dev/null 2>&1 || {
+        echo "[!] Failed to install fio." >&2
+        return 1
+      }
+    elif [[ "$install_cmd" == "dnf" ]]; then
+      sudo dnf install -y fio >/dev/null 2>&1 || {
+        echo "[!] Failed to install fio." >&2
+        return 1
+      }
+    elif [[ "$install_cmd" == "pacman" ]]; then
+      sudo pacman -Sy --noconfirm fio >/dev/null 2>&1 || {
+        echo "[!] Failed to install fio." >&2
+        return 1
+      }
+    fi
+    echo "[✓] fio installed successfully."
+  fi
+  
+  # Install speedtest (chỉ cho Debian/Ubuntu)
+  if [[ " ${packages_to_install[*]} " =~ " speedtest " ]]; then
+    if [[ "$install_cmd" == "apt-get" ]]; then
+      echo "[i] Installing speedtest (Ookla)..."
+      sudo apt-get install -y curl >/dev/null 2>&1 || true
+      curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash >/dev/null 2>&1 || {
+        echo "[!] Failed to add Ookla repo." >&2
+        return 1
+      }
+      sudo apt-get install -y speedtest >/dev/null 2>&1 || {
+        echo "[!] Failed to install speedtest." >&2
+        return 1
+      }
+      echo "[✓] speedtest installed successfully."
+    else
+      echo "[!] speedtest auto-install only supports Debian/Ubuntu." >&2
+      echo "[!] Please install manually: https://www.speedtest.net/apps/cli" >&2
+    fi
+  fi
+  
+  return 0
 }
 
 # Chạy FIO test với một block size cụ thể
@@ -938,6 +1073,9 @@ main() {
   print_heading "$(t 'heading.title')"
   echo "[i] Estimated runtime ~15 minutes (disk, FIO, speedtest). Please wait..."
   echo "[i] By continuing, you agree to share non-sensitive machine metrics (CPU/RAM/Disk/Network benchmarks). No commercial use of your data. Proceed?"
+  
+  # Check and install required packages ngay từ đầu
+  check_and_install_required_packages || true
 
   # Xác định sharing mode từ query parameter hoặc prompt (hỏi ngay từ đầu)
   local sharing_mode="${BENCHMARK_MODE:-}"

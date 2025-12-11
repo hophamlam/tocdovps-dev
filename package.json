@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:api": "bash scripts/test-api.sh",
+    "test:api:preview": "bash scripts/test-api.sh",
+    "git:new-feature": "bash scripts/git-workflow.sh new-feature",
+    "git:new-fix": "bash scripts/git-workflow.sh new-fix",
+    "git:status": "bash scripts/git-workflow.sh status",
+    "git:sync": "bash scripts/git-workflow.sh sync-main"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",
