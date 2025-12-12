@@ -1,20 +1,30 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 /**
- * Danh sách các công nghệ được sử dụng trong project
+ * Type cho technology với logo path hoặc emoji
  */
-const technologies = [
-  { name: "Next.js", icon: "⚡" },
-  { name: "React", icon: "⚛️" },
-  { name: "TypeScript", icon: "📘" },
-  { name: "Tailwind CSS", icon: "🎨" },
-  { name: "shadcn/ui", icon: "✨" },
-  { name: "PostgreSQL", icon: "🐘" },
-  { name: "Supabase", icon: "🚀" },
-  { name: "Vercel", icon: "▲" },
+type Technology = {
+  name: string;
+  logoPath?: string; // Path đến SVG trong public/icons folder
+  emoji?: string; // Emoji fallback
+};
+
+/**
+ * Danh sách các công nghệ được sử dụng trong project
+ * Sử dụng SVG logos từ public/icons folder
+ */
+const technologies: Technology[] = [
+  { name: "Next.js", logoPath: "/icons/nextdotjs.svg", emoji: "⚡" },
+  { name: "React", emoji: "⚛️" },
+  { name: "TypeScript", emoji: "📘" },
+  { name: "Tailwind CSS", emoji: "🎨" },
+  { name: "shadcn/ui", logoPath: "/icons/shadcnui.svg", emoji: "✨" },
+  { name: "Neon", logoPath: "/icons/neon-logomark-light-mono.svg", emoji: "🐘" },
+  { name: "Vercel", logoPath: "/icons/vercel.svg", emoji: "▲" },
 ];
 
 type TechStackProps = {
@@ -80,12 +90,10 @@ export const TechStack: React.FC<TechStackProps> = ({
 };
 
 /**
- * Component hiển thị một tech badge
- * @param tech - Object chứa name và icon của công nghệ
+ * Component hiển thị một tech badge với logo SVG hoặc emoji
+ * @param tech - Object chứa name và logo của công nghệ
  */
-const TechBadge: React.FC<{ tech: { name: string; icon: string } }> = ({
-  tech,
-}) => {
+const TechBadge: React.FC<{ tech: Technology }> = ({ tech }) => {
   return (
     <div
       className={cn(
@@ -95,9 +103,19 @@ const TechBadge: React.FC<{ tech: { name: string; icon: string } }> = ({
         "group"
       )}
     >
-      <span className="text-base transition-transform duration-300 group-hover:scale-110">
-        {tech.icon}
-      </span>
+      <div className="flex h-5 w-5 shrink-0 items-center justify-center transition-transform duration-300 group-hover:scale-110">
+        {tech.logoPath ? (
+          <Image
+            src={tech.logoPath}
+            alt={`${tech.name} logo`}
+            width={20}
+            height={20}
+            className="h-5 w-5 object-contain opacity-70 transition-opacity duration-300 group-hover:opacity-100"
+          />
+        ) : (
+          <span className="text-base">{tech.emoji || "⚡"}</span>
+        )}
+      </div>
       <span className="whitespace-nowrap">{tech.name}</span>
     </div>
   );
