@@ -1281,12 +1281,22 @@ send_report_if_configured() {
   echo
   echo "[i] Sending benchmark report to API..."
 
-  # Gửi JSON payload kèm header X-VISIBILITY (không cần token nữa)
+  # Gửi JSON payload kèm header X-VISIBILITY và bypass header nếu có VERCEL_BYPASS (cho Vercel deployment protection)
   local response http_code
-  response=$(curl -s -w "\n%{http_code}" -X POST "$report_url" \
-    -H "Content-Type: application/json" \
-    -H "X-VISIBILITY: $visibility" \
-    -d "$json_payload" 2>&1)
+  if [[ -n "${VERCEL_BYPASS:-}" ]]; then
+    # Có bypass secret, thêm header vào curl command
+    response=$(curl -s -w "\n%{http_code}" -X POST "$report_url" \
+      -H "Content-Type: application/json" \
+      -H "X-VISIBILITY: $visibility" \
+      -H "x-vercel-protection-bypass:${VERCEL_BYPASS}" \
+      -d "$json_payload" 2>&1)
+  else
+    # Không có bypass secret, gửi request bình thường
+    response=$(curl -s -w "\n%{http_code}" -X POST "$report_url" \
+      -H "Content-Type: application/json" \
+      -H "X-VISIBILITY: $visibility" \
+      -d "$json_payload" 2>&1)
+  fi
   
   # Tách HTTP code từ response (dòng cuối cùng)
   http_code=$(echo "$response" | tail -n1)
