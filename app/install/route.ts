@@ -31,6 +31,11 @@ export async function GET(req: NextRequest): Promise<Response> {
   const skipDisk = searchParams.get("skip-disk") === "true";
   const serverLabel = searchParams.get("server-label");
 
+  // Kiểm tra bypass secret từ header hoặc env var (cho Vercel deployment protection)
+  const bypassSecret =
+    req.headers.get("x-vercel-protection-bypass") ||
+    process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+
   // Build URL với query params nếu có
   let benchmarkUrl = `${protocol}://${host}/scripts/vps-benchmark.sh`;
   const urlParams = new URLSearchParams();
@@ -38,6 +43,10 @@ export async function GET(req: NextRequest): Promise<Response> {
   if (auto) urlParams.append("auto", "true");
   if (skipDisk) urlParams.append("skip-disk", "true");
   if (serverLabel) urlParams.append("server-label", serverLabel);
+  // Thêm bypass secret vào query parameter nếu có (cho Vercel deployment protection)
+  if (bypassSecret) {
+    urlParams.append("x-vercel-protection-bypass", bypassSecret);
+  }
   if (urlParams.toString()) {
     benchmarkUrl += `?${urlParams.toString()}`;
   }
@@ -50,10 +59,22 @@ export async function GET(req: NextRequest): Promise<Response> {
   if (mode) envVars.push(`export BENCHMARK_MODE="${mode}"`);
   // Tự động set REPORT_URL từ URL hiện tại (hỗ trợ ngrok)
   envVars.push(`export REPORT_URL="${protocol}://${host}/api/benchmark/report"`);
+  // Export bypass secret nếu có để script con có thể dùng
+  if (bypassSecret) {
+    envVars.push(`export VERCEL_BYPASS="${bypassSecret}"`);
+  }
   const envVarsStr = envVars.length > 0 ? envVars.join("\n") + "\n" : "";
 
+  // Build curl/wget commands với bypass header nếu có
+  const wgetCmd = bypassSecret
+    ? `wget -qO /tmp/tocdovps-benchmark.sh --header="x-vercel-protection-bypass:${bypassSecret}" "${benchmarkUrl}"`
+    : `wget -qO /tmp/tocdovps-benchmark.sh "${benchmarkUrl}"`;
+  const curlCmd = bypassSecret
+    ? `curl -fsSL -H "x-vercel-protection-bypass:${bypassSecret}" "${benchmarkUrl}" -o /tmp/tocdovps-benchmark.sh`
+    : `curl -fsSL "${benchmarkUrl}" -o /tmp/tocdovps-benchmark.sh`;
+
   const installScript = `#!/bin/sh
-${envVarsStr}wget -qO /tmp/tocdovps-benchmark.sh "${benchmarkUrl}" && chmod +x /tmp/tocdovps-benchmark.sh && bash /tmp/tocdovps-benchmark.sh && rm -f /tmp/tocdovps-benchmark.sh || (curl -fsSL "${benchmarkUrl}" -o /tmp/tocdovps-benchmark.sh && chmod +x /tmp/tocdovps-benchmark.sh && bash /tmp/tocdovps-benchmark.sh && rm -f /tmp/tocdovps-benchmark.sh)
+${envVarsStr}${wgetCmd} && chmod +x /tmp/tocdovps-benchmark.sh && bash /tmp/tocdovps-benchmark.sh && rm -f /tmp/tocdovps-benchmark.sh || (${curlCmd} && chmod +x /tmp/tocdovps-benchmark.sh && bash /tmp/tocdovps-benchmark.sh && rm -f /tmp/tocdovps-benchmark.sh)
 `;
 
   return new Response(installScript, {
