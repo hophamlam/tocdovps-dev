@@ -26,6 +26,44 @@ const slugify = (value?: string | null): string | null => {
 };
 
 /**
+ * Parse JSON value an toàn cho database jsonb column
+ * Nếu value là string, parse thành object. Nếu đã là object/null, giữ nguyên.
+ * @param value - Giá trị cần parse (có thể là string, object, hoặc null)
+ * @returns Parsed object hoặc null
+ */
+const parseJsonValue = (value: unknown): unknown => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  // Nếu đã là object/array, trả về trực tiếp
+  if (typeof value === "object") {
+    return value;
+  }
+
+  // Nếu là string, thử parse JSON
+  if (typeof value === "string") {
+    // Xử lý string "null" đặc biệt
+    const trimmed = value.trim();
+    if (trimmed === "null" || trimmed === "") {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(value);
+      // Nếu parse thành null (từ string "null"), trả về null
+      return parsed;
+    } catch {
+      // Nếu parse fail, có thể là string thông thường, trả về null
+      return null;
+    }
+  }
+
+  // Các type khác, trả về null
+  return null;
+};
+
+/**
  * Schema validation cho benchmark report payload
  * Sử dụng Zod để validate type-safe
  */
@@ -289,11 +327,11 @@ export async function POST(request: NextRequest) {
         ${data.providerText ?? null},
         ${providerSlug ?? null},
         ${cpuSlug ?? null},
-        ${data.systemInfo ?? null},
-        ${data.diskIo ?? null},
-        ${data.fio ?? null},
-        ${data.netSpeed ?? null},
-        ${data.summary ?? null},
+        ${parseJsonValue(data.systemInfo)},
+        ${parseJsonValue(data.diskIo)},
+        ${parseJsonValue(data.fio)},
+        ${parseJsonValue(data.netSpeed)},
+        ${parseJsonValue(data.summary)},
         ${JSON.stringify(data.payload ?? body)},
         ${visibility}
       )

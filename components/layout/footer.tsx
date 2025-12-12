@@ -58,7 +58,16 @@ export const Footer: React.FC = () => {
         {/* Copyright */}
         <div className="mt-8 border-t border-border/60 pt-6">
           <p className="text-center text-xs text-muted-foreground">
-            {t("footer.copyright.builtBy")}{" "}
+            <Link
+              href="https://github.com/hophamlam/tocdovps-dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+              aria-label="Open source on GitHub"
+            >
+              {t("footer.copyright.openSource")}
+            </Link>{" "}
+            {t("footer.copyright.by")}{" "}
             <Link
               href="https://hophamlam.com/"
               target="_blank"
@@ -67,17 +76,6 @@ export const Footer: React.FC = () => {
               aria-label="Visit hophamlam.com"
             >
               hophamlam
-            </Link>
-            {" • "}
-            {t("footer.copyright.sourceCode")}{" "}
-            <Link
-              href="https://github.com/hophamlam/tocdovps-dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-              aria-label="Open tocdovps.dev GitHub repository"
-            >
-              Github
             </Link>
           </p>
         </div>

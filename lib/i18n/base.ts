@@ -63,6 +63,8 @@ export const baseTranslations = {
     "footer.copyright": "© {year} tocdovps.dev",
     "footer.copyright.builtBy": "Được phát triển bởi",
     "footer.copyright.sourceCode": "Mã nguồn mở tại",
+    "footer.copyright.openSource": "Mã nguồn mở",
+    "footer.copyright.by": "bởi",
     "latestBenchmarks.title": "Kết quả benchmark mới nhất",
     "latestBenchmarks.description":
       "Một số lần chạy gần đây được báo cáo từ script CLI.",
@@ -441,6 +443,8 @@ export const baseTranslations = {
     "footer.copyright": "© {year} tocdovps.dev",
     "footer.copyright.builtBy": "Built by",
     "footer.copyright.sourceCode": "Source code available at",
+    "footer.copyright.openSource": "Open source",
+    "footer.copyright.by": "by",
     "latestBenchmarks.title": "Latest benchmarks",
     "latestBenchmarks.description":
       "A few of the most recent runs reported by the CLI script.",
