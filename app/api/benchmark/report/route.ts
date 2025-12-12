@@ -135,37 +135,39 @@ const normalizeJsonbValue = (value: unknown): unknown => {
  * Schema validation cho benchmark report payload
  * Sử dụng Zod để validate type-safe
  */
-const reportSchema = z.object({
-  // Cho phép serverLabel là string hoặc null và có thể không gửi lên
-  serverLabel: z.string().max(255).nullish(),
-  // Summary fields (tùy chọn)
-  avgPingMs: z.number().nonnegative().optional(),
-  downloadMbps: z.number().nonnegative().optional(),
-  score: z.number().min(0).max(10).optional(),
-  cpuModelText: z.string().max(500).optional(),
-  coreAmount: z.number().int().nonnegative().optional(),
-  frequencyGhz: z.number().nonnegative().optional(),
-  ramGb: z.number().nonnegative().optional(),
-  ramAvailableGb: z.number().nonnegative().optional(),
-  ramInfo: z.string().max(1000).optional(),
-  swapInfo: z.string().max(1000).optional(),
-  diskGb: z.number().nonnegative().optional(),
-  diskInfo: z.string().max(1000).optional(),
-  loadAverage: z.string().max(255).optional(),
-  uptimeSeconds: z.number().int().nonnegative().optional(),
-  osNameText: z.string().max(255).optional(),
-  virtualizationText: z.string().max(255).optional(),
-  providerText: z.string().max(255).optional(),
-  summary: z.unknown().optional(),
-  systemInfo: z.unknown().optional(),
-  diskIo: z.unknown().optional(),
-  fio: z.unknown().optional(),
-  netSpeed: z.unknown().optional(),
-  // payload có thể là network test payload hoặc system info payload
-  // Cho phép bất kỳ structure nào để linh hoạt (object, array, number, string, null, undefined)
-  // Dùng z.any() để accept mọi giá trị mà không validate
-  payload: z.any().optional(),
-});
+const reportSchema = z
+  .object({
+    // Cho phép serverLabel là string hoặc null và có thể không gửi lên
+    serverLabel: z.string().max(255).nullish(),
+    // Summary fields (tùy chọn)
+    avgPingMs: z.number().nonnegative().optional(),
+    downloadMbps: z.number().nonnegative().optional(),
+    score: z.number().min(0).max(10).optional(),
+    cpuModelText: z.string().max(500).optional(),
+    coreAmount: z.number().int().nonnegative().optional(),
+    frequencyGhz: z.number().nonnegative().optional(),
+    ramGb: z.number().nonnegative().optional(),
+    ramAvailableGb: z.number().nonnegative().optional(),
+    ramInfo: z.string().max(1000).optional(),
+    swapInfo: z.string().max(1000).optional(),
+    diskGb: z.number().nonnegative().optional(),
+    diskInfo: z.string().max(1000).optional(),
+    loadAverage: z.string().max(255).optional(),
+    uptimeSeconds: z.number().int().nonnegative().optional(),
+    osNameText: z.string().max(255).optional(),
+    virtualizationText: z.string().max(255).optional(),
+    providerText: z.string().max(255).optional(),
+    summary: z.unknown().optional(),
+    systemInfo: z.unknown().optional(),
+    diskIo: z.unknown().optional(),
+    fio: z.unknown().optional(),
+    netSpeed: z.unknown().optional(),
+    // payload có thể là network test payload hoặc system info payload
+    // Cho phép bất kỳ structure nào để linh hoạt
+    // Không validate payload field - accept mọi giá trị
+    payload: z.unknown().optional(),
+  })
+  .passthrough(); // Cho phép các field khác không được định nghĩa trong schema
 
 /**
  * Lấy client IP từ request headers

@@ -62,7 +62,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         )}
 
         <div className="space-y-4">
-          <h1 className="text-balance text-4xl font-semibold tracking-tight md:text-6xl">
+          <h1 className="text-balance text-5xl font-semibold tracking-tight md:text-7xl">
             {t("hero.title")}
           </h1>
           <p className="mx-auto max-w-2xl text-sm text-muted-foreground md:text-base">
