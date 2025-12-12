@@ -329,17 +329,27 @@ export async function POST(request: NextRequest) {
   const visibility = visibilityHeader === "private" ? "private" : "shared";
 
   // Normalize jsonb values và log để debug
+  // Parse payload nếu là string để có thể lấy systemInfo nested
+  let payloadObject: unknown = data.payload ?? null;
+  if (typeof payloadObject === "string") {
+    try {
+      payloadObject = JSON.parse(payloadObject);
+    } catch (e) {
+      console.warn("[API] Failed to parse payload string:", e);
+      payloadObject = null;
+    }
+  }
+
   const normalizedDiskIo = normalizeJsonbValue(data.diskIo);
   const normalizedFio = normalizeJsonbValue(data.fio);
   const normalizedNetSpeed = normalizeJsonbValue(data.netSpeed);
   // Ưu tiên systemInfo top-level, fallback vào payload.systemInfo nếu có
   const payloadSystemInfo =
-    data.payload &&
-    typeof data.payload === "object" &&
-    data.payload !== null &&
-    "systemInfo" in data.payload
+    payloadObject &&
+    typeof payloadObject === "object" &&
+    "systemInfo" in payloadObject
       ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (data.payload as Record<string, any>).systemInfo
+        (payloadObject as Record<string, any>).systemInfo
       : null;
   const normalizedSystemInfo = normalizeJsonbValue(
     data.systemInfo ?? payloadSystemInfo
@@ -454,38 +464,38 @@ export async function POST(request: NextRequest) {
         ${
           normalizedSystemInfo
             ? db.unsafe(
-                `to_jsonb($$${JSON.stringify(normalizedSystemInfo)}$$::text)`
+                `to_jsonb($$${JSON.stringify(normalizedSystemInfo)}$$::json)`
               )
             : null
         },
         ${
           normalizedDiskIo
             ? db.unsafe(
-                `to_jsonb($$${JSON.stringify(normalizedDiskIo)}$$::text)`
+                `to_jsonb($$${JSON.stringify(normalizedDiskIo)}$$::json)`
               )
             : null
         },
         ${
           normalizedFio
-            ? db.unsafe(`to_jsonb($$${JSON.stringify(normalizedFio)}$$::text)`)
+            ? db.unsafe(`to_jsonb($$${JSON.stringify(normalizedFio)}$$::json)`)
             : null
         },
         ${
           normalizedNetSpeed
             ? db.unsafe(
-                `to_jsonb($$${JSON.stringify(normalizedNetSpeed)}$$::text)`
+                `to_jsonb($$${JSON.stringify(normalizedNetSpeed)}$$::json)`
               )
             : null
         },
         ${
           normalizedSummary
             ? db.unsafe(
-                `to_jsonb($$${JSON.stringify(normalizedSummary)}$$::text)`
+                `to_jsonb($$${JSON.stringify(normalizedSummary)}$$::json)`
               )
             : null
         },
         ${db.unsafe(
-          `to_jsonb($$${JSON.stringify(data.payload ?? body)}$$::text)`
+          `to_jsonb($$${JSON.stringify(payloadObject ?? body)}$$::json)`
         )},
         ${visibility}
       )
