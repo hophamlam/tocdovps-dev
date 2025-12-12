@@ -24,7 +24,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     (process.env.NEXT_PUBLIC_INSTALL_BASE_URL || "").trim() || baseUrl;
   const normalizedInstallBase = installBase.replace(/\/+$/, "");
   const isStagingInstall = normalizedInstallBase.includes("staging.");
-  const scriptCommand = `bash <(curl -fsSL ${normalizedInstallBase}/install)`;
+  const bypassSecret =
+    (process.env.NEXT_PUBLIC_AUTOMATION_BYPASS_SECRET || "").trim() || null;
+  const scriptCommand = isStagingInstall
+    ? `VERCEL_AUTOMATION_BYPASS_SECRET="${
+        bypassSecret || "<your-secret>"
+      }" \\\n` + `bash <(curl -fsSL ${normalizedInstallBase}/install)`
+    : `bash <(curl -fsSL ${normalizedInstallBase}/install)`;
   const typingLine = `$ ${scriptCommand}`;
   const [copied, setCopied] = useState(false);
 
