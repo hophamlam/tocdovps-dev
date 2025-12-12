@@ -10,6 +10,7 @@ import {
   Terminal,
   TypingAnimation,
 } from "@/components/ui/terminal";
+import { BackgroundLines } from "@/components/ui/background-lines";
 
 type HeroSectionProps = {
   totalBenchmarks?: number;
@@ -40,8 +41,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    <section className="border-b border-border bg-gradient-to-b from-background via-background to-muted/40">
-      <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 pb-16 pt-20 md:flex-row md:items-center md:pb-24 md:pt-24">
+    <section className="relative border-b border-border bg-gradient-to-b from-background via-background to-muted/40">
+      {/* Background Lines - absolute positioned */}
+      <BackgroundLines className="absolute inset-0" />
+
+      {/* Content container - giữ layout như cũ */}
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-12 px-4 pb-16 pt-20 md:flex-row md:items-center md:pb-24 md:pt-24">
         {/* Cột trái: copy chính kiểu Framer */}
         <div className="flex-1 space-y-8">
           {totalBenchmarks > 0 ? (

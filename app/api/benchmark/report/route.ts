@@ -26,34 +26,72 @@ const slugify = (value?: string | null): string | null => {
 };
 
 /**
+ * Clean object để loại bỏ các giá trị không hợp lệ cho JSON (NaN, Infinity, undefined)
+ * @param obj - Object cần clean
+ * @returns Cleaned object
+ */
+const cleanObjectForJson = (obj: unknown): unknown => {
+  if (obj === null || obj === undefined) {
+    return null;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(cleanObjectForJson);
+  }
+
+  if (typeof obj === "object") {
+    const cleaned: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      // Skip undefined values
+      if (value === undefined) {
+        continue;
+      }
+      // Replace NaN và Infinity với null
+      if (typeof value === "number" && (isNaN(value) || !isFinite(value))) {
+        cleaned[key] = null;
+      } else {
+        cleaned[key] = cleanObjectForJson(value);
+      }
+    }
+    return cleaned;
+  }
+
+  // Replace NaN và Infinity với null cho numbers
+  if (typeof obj === "number" && (isNaN(obj) || !isFinite(obj))) {
+    return null;
+  }
+
+  return obj;
+};
+
+/**
  * Parse và normalize JSON value cho database jsonb column
- * Với Neon/postgresql-js, jsonb values cần là object/array (không phải string)
+ * Với Neon/postgresql-js, pass object/array trực tiếp (Neon sẽ tự xử lý)
  * @param value - Giá trị cần parse (có thể là string, object, hoặc null)
- * @returns Parsed object/array hoặc null (để insert vào jsonb column)
+ * @returns Cleaned object/array hoặc null
  */
 const normalizeJsonbValue = (value: unknown): unknown => {
   if (value === null || value === undefined) {
     return null;
   }
 
-  // Nếu đã là object/array, trả về trực tiếp (Neon sẽ tự động stringify)
-  if (typeof value === "object") {
-    return value;
-  }
+  let parsed: unknown;
 
-  // Nếu là string, parse thành object
-  if (typeof value === "string") {
+  // Nếu đã là object/array, clean nó
+  if (typeof value === "object") {
+    parsed = cleanObjectForJson(value);
+  }
+  // Nếu là string, parse thành object trước
+  else if (typeof value === "string") {
     const trimmed = value.trim();
     if (trimmed === "null" || trimmed === "") {
       return null;
     }
 
-    // Thử parse JSON string thành object
     try {
-      const parsed = JSON.parse(value);
-      return parsed;
+      parsed = JSON.parse(value);
+      parsed = cleanObjectForJson(parsed);
     } catch (error) {
-      // Nếu parse fail, log warning và trả về null
       console.warn(
         `[API] Failed to parse JSON string (first 100 chars):`,
         value.substring(0, 100),
@@ -61,10 +99,11 @@ const normalizeJsonbValue = (value: unknown): unknown => {
       );
       return null;
     }
+  } else {
+    return null;
   }
 
-  // Các type khác, trả về null
-  return null;
+  return parsed;
 };
 
 /**
@@ -279,29 +318,45 @@ export async function POST(request: NextRequest) {
 
   // Debug logging (chỉ log type và preview, không log toàn bộ data)
   if (normalizedDiskIo !== null) {
-    console.log(
-      `[API] diskIo type: ${typeof normalizedDiskIo}, isArray: ${Array.isArray(
-        normalizedDiskIo
-      )}`
-    );
+    try {
+      const preview = JSON.stringify(normalizedDiskIo).substring(0, 200);
+      console.log(
+        `[API] diskIo type: ${typeof normalizedDiskIo}, isArray: ${Array.isArray(
+          normalizedDiskIo
+        )}, preview: ${preview}`
+      );
+    } catch (e) {
+      console.warn(`[API] Failed to stringify diskIo for logging:`, e);
+    }
   }
   if (normalizedFio !== null) {
-    console.log(
-      `[API] fio type: ${typeof normalizedFio}, isArray: ${Array.isArray(
-        normalizedFio
-      )}`
-    );
+    try {
+      const preview = JSON.stringify(normalizedFio).substring(0, 200);
+      console.log(
+        `[API] fio type: ${typeof normalizedFio}, isArray: ${Array.isArray(
+          normalizedFio
+        )}, preview: ${preview}`
+      );
+    } catch (e) {
+      console.warn(`[API] Failed to stringify fio for logging:`, e);
+    }
   }
   if (normalizedNetSpeed !== null) {
-    console.log(
-      `[API] netSpeed type: ${typeof normalizedNetSpeed}, isArray: ${Array.isArray(
-        normalizedNetSpeed
-      )}`
-    );
+    try {
+      const preview = JSON.stringify(normalizedNetSpeed).substring(0, 200);
+      console.log(
+        `[API] netSpeed type: ${typeof normalizedNetSpeed}, isArray: ${Array.isArray(
+          normalizedNetSpeed
+        )}, preview: ${preview}`
+      );
+    } catch (e) {
+      console.warn(`[API] Failed to stringify netSpeed for logging:`, e);
+    }
   }
 
   try {
     // Insert vào database
+    // Với jsonb columns, cần cast string thành jsonb trong SQL
     const [row] = await db/* sql */ `
       INSERT INTO benchmark_runs (
         source_ip,
@@ -366,7 +421,7 @@ export async function POST(request: NextRequest) {
         ${normalizedFio},
         ${normalizedNetSpeed},
         ${normalizedSummary},
-        ${JSON.stringify(data.payload ?? body)},
+        ${data.payload ?? body},
         ${visibility}
       )
       RETURNING id, created_at;
