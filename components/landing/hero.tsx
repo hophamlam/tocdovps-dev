@@ -10,7 +10,6 @@ import {
   Terminal,
   TypingAnimation,
 } from "@/components/ui/terminal";
-import { BackgroundLines } from "@/components/ui/background-lines";
 
 type HeroSectionProps = {
   totalBenchmarks?: number;
@@ -41,12 +40,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    <section className="relative border-b border-border bg-gradient-to-b from-background via-background to-muted/40">
-      {/* Background Lines - absolute positioned */}
-      <BackgroundLines className="absolute inset-0" />
+    <section className="relative border-b border-border bg-gradient-to-b from-background via-background to-muted/40 overflow-hidden">
+      {/* Grid background overlay - adaptive cho light/dark mode */}
+      <div className="pointer-events-none absolute inset-0 [background-size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] bg-[linear-gradient(to_right,rgb(0_0_0/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(0_0_0/0.05)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgb(255_255_255/0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.08)_1px,transparent_1px)]"></div>
 
-      {/* Content container - giữ layout như cũ */}
-      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-12 px-4 pb-16 pt-20 md:flex-row md:items-center md:pb-24 md:pt-24">
+      <div className="relative mx-auto flex max-w-6xl flex-col gap-12 px-4 pb-16 pt-20 md:flex-row md:items-center md:pb-24 md:pt-24">
         {/* Cột trái: copy chính kiểu Framer */}
         <div className="flex-1 space-y-8">
           {totalBenchmarks > 0 ? (

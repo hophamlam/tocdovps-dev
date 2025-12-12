@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { sql } from "@neondatabase/serverless";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { BenchmarkPayload } from "@/lib/types/benchmark";
 
@@ -26,24 +27,32 @@ const slugify = (value?: string | null): string | null => {
 };
 
 /**
- * Clean object để loại bỏ các giá trị không hợp lệ cho JSON (NaN, Infinity, undefined)
+ * Clean object để loại bỏ các giá trị không hợp lệ cho JSON
+ * Loại bỏ: NaN, Infinity, undefined, functions, symbols
  * @param obj - Object cần clean
- * @returns Cleaned object
+ * @returns Cleaned object có thể serialize thành JSON
  */
 const cleanObjectForJson = (obj: unknown): unknown => {
+  // Handle null và undefined
   if (obj === null || obj === undefined) {
     return null;
   }
 
+  // Handle arrays
   if (Array.isArray(obj)) {
-    return obj.map(cleanObjectForJson);
+    return obj.map(cleanObjectForJson).filter((item) => item !== undefined);
   }
 
+  // Handle objects
   if (typeof obj === "object") {
     const cleaned: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
-      // Skip undefined values
-      if (value === undefined) {
+      // Skip undefined, functions, symbols
+      if (
+        value === undefined ||
+        typeof value === "function" ||
+        typeof value === "symbol"
+      ) {
         continue;
       }
       // Replace NaN và Infinity với null
@@ -56,19 +65,28 @@ const cleanObjectForJson = (obj: unknown): unknown => {
     return cleaned;
   }
 
-  // Replace NaN và Infinity với null cho numbers
-  if (typeof obj === "number" && (isNaN(obj) || !isFinite(obj))) {
-    return null;
+  // Handle numbers - replace NaN và Infinity với null
+  if (typeof obj === "number") {
+    if (isNaN(obj) || !isFinite(obj)) {
+      return null;
+    }
+    return obj;
   }
 
-  return obj;
+  // Handle strings, booleans - giữ nguyên
+  if (typeof obj === "string" || typeof obj === "boolean") {
+    return obj;
+  }
+
+  // Các type khác (function, symbol, bigint) - skip
+  return null;
 };
 
 /**
  * Parse và normalize JSON value cho database jsonb column
- * Với Neon/postgresql-js, pass object/array trực tiếp (Neon sẽ tự xử lý)
+ * Với Neon/postgresql-js, jsonb values cần là object/array (không phải string)
  * @param value - Giá trị cần parse (có thể là string, object, hoặc null)
- * @returns Cleaned object/array hoặc null
+ * @returns Cleaned object/array hoặc null (để insert vào jsonb column)
  */
 const normalizeJsonbValue = (value: unknown): unknown => {
   if (value === null || value === undefined) {
@@ -81,17 +99,19 @@ const normalizeJsonbValue = (value: unknown): unknown => {
   if (typeof value === "object") {
     parsed = cleanObjectForJson(value);
   }
-  // Nếu là string, parse thành object trước
+  // Nếu là string, parse thành object trước rồi clean
   else if (typeof value === "string") {
     const trimmed = value.trim();
     if (trimmed === "null" || trimmed === "") {
       return null;
     }
 
+    // Thử parse JSON string thành object
     try {
       parsed = JSON.parse(value);
       parsed = cleanObjectForJson(parsed);
     } catch (error) {
+      // Nếu parse fail, log warning và trả về null
       console.warn(
         `[API] Failed to parse JSON string (first 100 chars):`,
         value.substring(0, 100),
@@ -316,47 +336,52 @@ export async function POST(request: NextRequest) {
   const normalizedSystemInfo = normalizeJsonbValue(data.systemInfo);
   const normalizedSummary = normalizeJsonbValue(data.summary);
 
-  // Debug logging (chỉ log type và preview, không log toàn bộ data)
+  // Debug logging - validate JSON có thể stringify được không
   if (normalizedDiskIo !== null) {
     try {
-      const preview = JSON.stringify(normalizedDiskIo).substring(0, 200);
+      const testStringify = JSON.stringify(normalizedDiskIo);
       console.log(
-        `[API] diskIo type: ${typeof normalizedDiskIo}, isArray: ${Array.isArray(
+        `[API] diskIo: can stringify=${
+          testStringify.length
+        } chars, type=${typeof normalizedDiskIo}, isArray=${Array.isArray(
           normalizedDiskIo
-        )}, preview: ${preview}`
+        )}`
       );
     } catch (e) {
-      console.warn(`[API] Failed to stringify diskIo for logging:`, e);
+      console.error(`[API] diskIo FAILED to stringify:`, e);
     }
   }
   if (normalizedFio !== null) {
     try {
-      const preview = JSON.stringify(normalizedFio).substring(0, 200);
+      const testStringify = JSON.stringify(normalizedFio);
       console.log(
-        `[API] fio type: ${typeof normalizedFio}, isArray: ${Array.isArray(
+        `[API] fio: can stringify=${
+          testStringify.length
+        } chars, type=${typeof normalizedFio}, isArray=${Array.isArray(
           normalizedFio
-        )}, preview: ${preview}`
+        )}`
       );
     } catch (e) {
-      console.warn(`[API] Failed to stringify fio for logging:`, e);
+      console.error(`[API] fio FAILED to stringify:`, e);
     }
   }
   if (normalizedNetSpeed !== null) {
     try {
-      const preview = JSON.stringify(normalizedNetSpeed).substring(0, 200);
+      const testStringify = JSON.stringify(normalizedNetSpeed);
       console.log(
-        `[API] netSpeed type: ${typeof normalizedNetSpeed}, isArray: ${Array.isArray(
+        `[API] netSpeed: can stringify=${
+          testStringify.length
+        } chars, type=${typeof normalizedNetSpeed}, isArray=${Array.isArray(
           normalizedNetSpeed
-        )}, preview: ${preview}`
+        )}`
       );
     } catch (e) {
-      console.warn(`[API] Failed to stringify netSpeed for logging:`, e);
+      console.error(`[API] netSpeed FAILED to stringify:`, e);
     }
   }
 
   try {
     // Insert vào database
-    // Với jsonb columns, cần cast string thành jsonb trong SQL
     const [row] = await db/* sql */ `
       INSERT INTO benchmark_runs (
         source_ip,
