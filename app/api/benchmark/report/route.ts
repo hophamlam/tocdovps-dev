@@ -26,35 +26,39 @@ const slugify = (value?: string | null): string | null => {
 };
 
 /**
- * Parse JSON value an toàn cho database jsonb column
- * Nếu value là string, parse thành object. Nếu đã là object/null, giữ nguyên.
+ * Parse và normalize JSON value cho database jsonb column
+ * Với Neon/postgresql-js, jsonb values cần là object/array (không phải string)
  * @param value - Giá trị cần parse (có thể là string, object, hoặc null)
- * @returns Parsed object hoặc null
+ * @returns Parsed object/array hoặc null (để insert vào jsonb column)
  */
-const parseJsonValue = (value: unknown): unknown => {
+const normalizeJsonbValue = (value: unknown): unknown => {
   if (value === null || value === undefined) {
     return null;
   }
 
-  // Nếu đã là object/array, trả về trực tiếp
+  // Nếu đã là object/array, trả về trực tiếp (Neon sẽ tự động stringify)
   if (typeof value === "object") {
     return value;
   }
 
-  // Nếu là string, thử parse JSON
+  // Nếu là string, parse thành object
   if (typeof value === "string") {
-    // Xử lý string "null" đặc biệt
     const trimmed = value.trim();
     if (trimmed === "null" || trimmed === "") {
       return null;
     }
 
+    // Thử parse JSON string thành object
     try {
       const parsed = JSON.parse(value);
-      // Nếu parse thành null (từ string "null"), trả về null
       return parsed;
-    } catch {
-      // Nếu parse fail, có thể là string thông thường, trả về null
+    } catch (error) {
+      // Nếu parse fail, log warning và trả về null
+      console.warn(
+        `[API] Failed to parse JSON string (first 100 chars):`,
+        value.substring(0, 100),
+        error
+      );
       return null;
     }
   }
@@ -266,6 +270,36 @@ export async function POST(request: NextRequest) {
   const visibilityHeader = request.headers.get("x-visibility");
   const visibility = visibilityHeader === "private" ? "private" : "shared";
 
+  // Normalize jsonb values và log để debug
+  const normalizedDiskIo = normalizeJsonbValue(data.diskIo);
+  const normalizedFio = normalizeJsonbValue(data.fio);
+  const normalizedNetSpeed = normalizeJsonbValue(data.netSpeed);
+  const normalizedSystemInfo = normalizeJsonbValue(data.systemInfo);
+  const normalizedSummary = normalizeJsonbValue(data.summary);
+
+  // Debug logging (chỉ log type và preview, không log toàn bộ data)
+  if (normalizedDiskIo !== null) {
+    console.log(
+      `[API] diskIo type: ${typeof normalizedDiskIo}, isArray: ${Array.isArray(
+        normalizedDiskIo
+      )}`
+    );
+  }
+  if (normalizedFio !== null) {
+    console.log(
+      `[API] fio type: ${typeof normalizedFio}, isArray: ${Array.isArray(
+        normalizedFio
+      )}`
+    );
+  }
+  if (normalizedNetSpeed !== null) {
+    console.log(
+      `[API] netSpeed type: ${typeof normalizedNetSpeed}, isArray: ${Array.isArray(
+        normalizedNetSpeed
+      )}`
+    );
+  }
+
   try {
     // Insert vào database
     const [row] = await db/* sql */ `
@@ -327,11 +361,11 @@ export async function POST(request: NextRequest) {
         ${data.providerText ?? null},
         ${providerSlug ?? null},
         ${cpuSlug ?? null},
-        ${parseJsonValue(data.systemInfo)},
-        ${parseJsonValue(data.diskIo)},
-        ${parseJsonValue(data.fio)},
-        ${parseJsonValue(data.netSpeed)},
-        ${parseJsonValue(data.summary)},
+        ${normalizedSystemInfo},
+        ${normalizedDiskIo},
+        ${normalizedFio},
+        ${normalizedNetSpeed},
+        ${normalizedSummary},
         ${JSON.stringify(data.payload ?? body)},
         ${visibility}
       )

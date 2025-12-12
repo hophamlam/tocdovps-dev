@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { getBaseUrl } from "@/lib/base-url";
 import {
@@ -43,17 +44,25 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 pb-16 pt-20 md:flex-row md:items-center md:pb-24 md:pt-24">
         {/* Cột trái: copy chính kiểu Framer */}
         <div className="flex-1 space-y-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1 text-xs text-muted-foreground shadow-sm backdrop-blur">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            <span>
-              {totalBenchmarks > 0
-                ? t("hero.benchmarkCount").replace(
-                    "{count}",
-                    totalBenchmarks.toLocaleString()
-                  )
-                : "tocdovps.dev • Early preview"}
-            </span>
-          </div>
+          {totalBenchmarks > 0 ? (
+            <Link
+              href="/leaderboard"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1 text-xs text-muted-foreground shadow-sm backdrop-blur transition hover:bg-card hover:text-foreground"
+            >
+              <span>
+                {t("hero.benchmarkCount").replace(
+                  "{count}",
+                  totalBenchmarks.toLocaleString()
+                )}
+              </span>
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          ) : (
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1 text-xs text-muted-foreground shadow-sm backdrop-blur">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span>tocdovps.dev • Early preview</span>
+            </div>
+          )}
           <div className="space-y-4">
             <h1 className="text-balance text-4xl font-semibold tracking-tight md:text-5xl">
               {t("hero.title")}
@@ -146,7 +155,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   1. System Information
                 </AnimatedSpan>
                 <AnimatedSpan className="text-muted-foreground">
-                  CPU&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz
+                  CPU&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: Intel(R) Xeon(R) CPU
+                  E5-2680 v4 @ 2.40GHz
                 </AnimatedSpan>
                 <AnimatedSpan className="text-foreground">
                   Cores&nbsp;&nbsp;: 4
@@ -203,16 +213,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   ============================================================
                 </AnimatedSpan>
                 <AnimatedSpan className="text-foreground">
-                  Server                    | Ping  | Download | Upload
+                  Server | Ping | Download | Upload
                 </AnimatedSpan>
                 <AnimatedSpan className="text-blue-500">
-                  VN HCM Viettel            | 2.7ms | 83.3 Mbps| 93.3 Mbps
+                  VN HCM Viettel | 2.7ms | 83.3 Mbps| 93.3 Mbps
                 </AnimatedSpan>
                 <AnimatedSpan className="text-blue-500">
-                  SG Singtel                | 44ms  | 22.0 Mbps| 92.9 Mbps
+                  SG Singtel | 44ms | 22.0 Mbps| 92.9 Mbps
                 </AnimatedSpan>
                 <AnimatedSpan className="text-blue-500">
-                  US LA Hivelocity          | 174ms | 17.1 Mbps| 93.3 Mbps
+                  US LA Hivelocity | 174ms | 17.1 Mbps| 93.3 Mbps
                 </AnimatedSpan>
               </Terminal>
             </div>
