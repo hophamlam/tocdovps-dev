@@ -1235,6 +1235,9 @@ send_report_if_configured() {
 
   # Ưu tiên REPORT_URL từ env (dev / override), nếu không thì dùng DEFAULT_REPORT_URL
   local report_url="${REPORT_URL:-$DEFAULT_REPORT_URL}"
+  # Optional: bypass Vercel Deployment Protection (chỉ dùng cho preview/staging)
+  # Set through env: VERCEL_AUTOMATION_BYPASS_SECRET or VERCEL_PROTECTION_BYPASS
+  local bypass_secret="${VERCEL_AUTOMATION_BYPASS_SECRET:-${VERCEL_PROTECTION_BYPASS:-}}"
 
   if ! command_exists curl; then
     echo
@@ -1250,6 +1253,7 @@ send_report_if_configured() {
   response=$(curl -s -w "\n%{http_code}" -X POST "$report_url" \
     -H "Content-Type: application/json" \
     -H "X-VISIBILITY: $visibility" \
+    ${bypass_secret:+-H "x-vercel-protection-bypass: $bypass_secret"} \
     -d "$json_payload" 2>&1)
   
   # Tách HTTP code từ response (dòng cuối cùng)

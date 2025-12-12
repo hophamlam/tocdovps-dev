@@ -20,7 +20,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   const { t } = useI18n();
   const baseUrl = getBaseUrl();
-  const scriptCommand = `bash <(curl -fsSL ${baseUrl}/install)`;
+  const installBase =
+    (process.env.NEXT_PUBLIC_INSTALL_BASE_URL || "").trim() || baseUrl;
+  const normalizedInstallBase = installBase.replace(/\/+$/, "");
+  const isStagingInstall = normalizedInstallBase.includes("staging.");
+  const scriptCommand = `bash <(curl -fsSL ${normalizedInstallBase}/install)`;
   const typingLine = `$ ${scriptCommand}`;
   const [copied, setCopied] = useState(false);
 
@@ -75,6 +79,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             onClick={handleCopy}
             className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
           >
+            {isStagingInstall && (
+              <span className="rounded-full bg-primary-foreground/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                Staging
+              </span>
+            )}
             <span className="truncate font-mono text-xs sm:text-sm">
               {scriptCommand}
             </span>
