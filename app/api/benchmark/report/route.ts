@@ -440,12 +440,42 @@ export async function POST(request: NextRequest) {
         ${data.providerText ?? null},
         ${providerSlug ?? null},
         ${cpuSlug ?? null},
-        ${normalizedSystemInfo},
-        ${normalizedDiskIo},
-        ${normalizedFio},
-        ${normalizedNetSpeed},
-        ${normalizedSummary},
-        ${data.payload ?? body},
+        ${
+          normalizedSystemInfo
+            ? db.unsafe(
+                `to_jsonb($$${JSON.stringify(normalizedSystemInfo)}$$::text)`
+              )
+            : null
+        },
+        ${
+          normalizedDiskIo
+            ? db.unsafe(
+                `to_jsonb($$${JSON.stringify(normalizedDiskIo)}$$::text)`
+              )
+            : null
+        },
+        ${
+          normalizedFio
+            ? db.unsafe(`to_jsonb($$${JSON.stringify(normalizedFio)}$$::text)`)
+            : null
+        },
+        ${
+          normalizedNetSpeed
+            ? db.unsafe(
+                `to_jsonb($$${JSON.stringify(normalizedNetSpeed)}$$::text)`
+              )
+            : null
+        },
+        ${
+          normalizedSummary
+            ? db.unsafe(
+                `to_jsonb($$${JSON.stringify(normalizedSummary)}$$::text)`
+              )
+            : null
+        },
+        ${db.unsafe(
+          `to_jsonb($$${JSON.stringify(data.payload ?? body)}$$::text)`
+        )},
         ${visibility}
       )
       RETURNING id, created_at;
