@@ -1103,6 +1103,131 @@ check_and_install_speedtest() {
 # API REPORTING FUNCTIONS
 # ============================================================================
 
+# Hàm tạo JSON payload đầy đủ với tất cả data (bao gồm netSpeed nếu có)
+# Sử dụng các biến global đã được set trong hàm main()
+build_complete_json_payload() {
+  local net_speed_json="${1:-null}"
+  
+  # Escape các ký tự đặc biệt trong string để đảm bảo JSON hợp lệ
+  # Sử dụng các biến global từ hàm main()
+  local cpu_model_escaped os_name_escaped os_version_escaped virt_type_escaped uptime_str_escaped provider_escaped
+  cpu_model_escaped=$(echo "${cpu_model:-}" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  os_name_escaped=$(echo "${os_name:-}" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  os_version_escaped=$(echo "${os_version:-}" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  virt_type_escaped=$(echo "${virt_type:-}" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  uptime_str_escaped=$(echo "${uptime_str:-}" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  provider_escaped=$(echo "${provider:-}" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  city_escaped=$(echo "${city:-}" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  region_escaped=$(echo "${region:-}" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  country_escaped=$(echo "${country:-}" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  loc_escaped=$(echo "${loc:-}" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  public_ip_escaped=$(echo "${public_ip:-}" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+  
+  # Build payload object
+  local payload_disk_io payload_fio payload_net_speed
+  
+  # Disk I/O data
+  payload_disk_io="{\"writeSpeedMbps\":${write_speed_mbps:-0},\"writeSpeedMBs\":${write_speed_mbs:-0},\"readSpeedMbps\":${read_speed_mbps:-0},\"readSpeedMBs\":${read_speed_mbs:-0},\"timeSeconds\":${elapsed_time:-0},\"bytesWritten\":${bytes_written:-0}}"
+  
+  # FIO data (nếu có) - parse từ fio_result global variable
+  if [[ -n "${fio_result:-}" ]] && [[ "${fio_result:-}" != "" ]]; then
+    # Parse FIO results thành JSON - format: 4k|total|read|write|iops|iops_read|iops_write|64k|...
+    payload_fio="{"
+    local first=true
+    IFS='|' read -ra parts <<< "${fio_result:-}"
+    local i=0
+    while [[ $i -lt ${#parts[@]} ]]; do
+      case "${parts[$i]}" in
+        4k|64k|512k|1M)
+          [[ "$first" == "false" ]] && payload_fio="${payload_fio},"
+          first=false
+          local bs="${parts[$i]}"
+          local total="${parts[$((i+1))]:-0}"
+          local read_val="${parts[$((i+2))]:-0}"
+          local write_val="${parts[$((i+3))]:-0}"
+          local iops="${parts[$((i+4))]:-0}"
+          local iops_read="${parts[$((i+5))]:-0}"
+          local iops_write="${parts[$((i+6))]:-0}"
+          payload_fio="${payload_fio}\"${bs}\":{\"total\":${total},\"read\":${read_val},\"write\":${write_val},\"iops\":${iops},\"iopsRead\":${iops_read},\"iopsWrite\":${iops_write}}"
+          i=$((i + 7))
+          ;;
+        *)
+          i=$((i + 1))
+          ;;
+      esac
+    done
+    payload_fio="${payload_fio}}"
+  else
+    payload_fio="{}"
+  fi
+  
+  # Network speed data (nếu có)
+  if [[ "$net_speed_json" != "null" ]] && [[ -n "$net_speed_json" ]]; then
+    payload_net_speed="$net_speed_json"
+  else
+    payload_net_speed="null"
+  fi
+  
+  # Tạo JSON payload hoàn chỉnh
+  cat <<EOF
+{
+  "serverLabel": null,
+  "cpuModelText": "${cpu_model_escaped}",
+  "coreAmount": ${cpu_cores:-1},
+  "frequencyGhz": ${cpu_freq:-0},
+  "ramGb": ${ram_total:-0},
+  "ramAvailableGb": ${ram_available:-0},
+  "ramInfo": "${ram_total:-0} GB (Available: ${ram_available:-0} GB)",
+  "swapInfo": "${swap_total:-0} GB (Used: ${swap_used:-0} GB)",
+  "diskGb": ${disk_total:-0},
+  "diskInfo": "${disk_total:-0} GB (Used: ${disk_used:-0} GB, Available: ${disk_available:-0} GB)",
+  "loadAverage": "${load_1min:-0}, ${load_5min:-0}, ${load_15min:-0}",
+  "uptimeSeconds": ${uptime_seconds:-0},
+  "osNameText": "${os_name_escaped}",
+  "virtualizationText": "${virt_type_escaped}",
+  "providerText": "${provider_escaped}",
+  "diskIo": ${payload_disk_io},
+  "fio": ${payload_fio},
+  "netSpeed": ${payload_net_speed},
+  "payload": {
+    "cpu": {
+      "model": "${cpu_model_escaped}",
+      "cores": ${cpu_cores:-1},
+      "frequencyGHz": ${cpu_freq:-0}
+    },
+    "ram": {
+      "totalGB": ${ram_total:-0},
+      "availableGB": ${ram_available:-0}
+    },
+    "swap": {
+      "totalGB": ${swap_total:-0},
+      "usedGB": ${swap_used:-0}
+    },
+    "disk": {
+      "totalGB": ${disk_total:-0},
+      "usedGB": ${disk_used:-0},
+      "availableGB": ${disk_available:-0}
+    },
+    "loadAverage": {
+      "1min": ${load_1min:-0},
+      "5min": ${load_5min:-0},
+      "15min": ${load_15min:-0}
+    },
+    "uptime": "${uptime_str_escaped}",
+    "os": {
+      "name": "${os_name_escaped}",
+      "version": "${os_version_escaped}"
+    },
+    "virtualization": "${virt_type_escaped}",
+    "provider": "${provider_escaped}",
+    "diskIo": ${payload_disk_io},
+    "fio": ${payload_fio},
+    "netSpeed": ${payload_net_speed}
+  }
+}
+EOF
+}
+
 # Gửi JSON report tới API
 send_report_if_configured() {
   local json_payload="$1"
@@ -1165,6 +1290,54 @@ send_report_if_configured() {
   fi
 }
 
+# Convert speedtest results thành JSON array
+convert_speedtest_to_json() {
+  local st_results="$1"
+  local json_output=""
+  
+  # Thử dùng jq nếu có
+  if command_exists jq; then
+    json_output=$(echo "$st_results" | while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      IFS='|' read -r server ping dl ul <<< "$line"
+      ping=$(awk -v v="${ping:-0}" 'BEGIN { printf "%.2f", v }')
+      dl=$(awk -v v="${dl:-0}" 'BEGIN { printf "%.2f", v }')
+      ul=$(awk -v v="${ul:-0}" 'BEGIN { printf "%.2f", v }')
+      # Escape quotes trong server name
+      server_escaped=$(echo "$server" | sed 's/"/\\"/g')
+      echo "{\"server\":\"${server_escaped}\",\"ping\":${ping},\"download\":${dl},\"upload\":${ul}}"
+    done | jq -s '.' 2>/dev/null)
+    
+    if [[ -n "$json_output" ]]; then
+      echo "$json_output"
+      return 0
+    fi
+  fi
+  
+  # Fallback: tạo JSON thủ công
+  json_output="["
+  local first=true
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    IFS='|' read -r server ping dl ul <<< "$line"
+    ping=$(awk -v v="${ping:-0}" 'BEGIN { printf "%.2f", v }')
+    dl=$(awk -v v="${dl:-0}" 'BEGIN { printf "%.2f", v }')
+    ul=$(awk -v v="${ul:-0}" 'BEGIN { printf "%.2f", v }')
+    # Escape quotes trong server name
+    server_escaped=$(echo "$server" | sed 's/"/\\"/g')
+    if [[ "$first" == "true" ]]; then
+      first=false
+    else
+      json_output="${json_output},"
+    fi
+    json_output="${json_output}{\"server\":\"${server_escaped}\",\"ping\":${ping},\"download\":${dl},\"upload\":${ul}}"
+  done <<< "$st_results"
+  json_output="${json_output}]"
+  
+  echo "$json_output"
+}
+
+# Gửi PATCH request để update net_speed sau khi network speed test hoàn thành
 # ============================================================================
 # MAIN FUNCTION
 # ============================================================================
@@ -1244,40 +1417,39 @@ main() {
 
   print_heading "1. $(t 'system.info')"
   
-  # CPU Info
-  local cpu_info cpu_model cpu_cores cpu_freq
+  # CPU Info (không dùng local để có thể dùng trong build_complete_json_payload)
+  local cpu_info
   cpu_info=$(get_cpu_info)
   IFS='|' read -r cpu_model cpu_cores cpu_freq <<< "$cpu_info"
   printf "%-18s : %s\n" "$(t 'system.cpu')" "$cpu_model"
   printf "%-18s : %s\n" "$(t 'system.cores')" "$cpu_cores"
   printf "%-18s : %.2f GHz\n" "$(t 'system.frequency')" "$cpu_freq"
   
-  # RAM Info
-  local ram_info ram_total ram_available
+  # RAM Info (không dùng local để có thể dùng trong build_complete_json_payload)
+  local ram_info
   ram_info=$(get_ram_info)
   IFS='|' read -r ram_total ram_available <<< "$ram_info"
   printf "%-18s : %.2f GB ($(t 'system.available'): %.2f GB)\n" "$(t 'system.ram')" "$ram_total" "$ram_available"
   
-  # Swap Info
-  local swap_info swap_total swap_used
+  # Swap Info (không dùng local để có thể dùng trong build_complete_json_payload)
+  local swap_info
   swap_info=$(get_swap_info)
   IFS='|' read -r swap_total swap_used <<< "$swap_info"
   printf "%-18s : %.2f GB ($(t 'system.used'): %.2f GB)\n" "$(t 'system.swap')" "$swap_total" "$swap_used"
   
-  # Disk Info
-  local disk_info disk_total disk_used disk_available
+  # Disk Info (không dùng local để có thể dùng trong build_complete_json_payload)
+  local disk_info
   disk_info=$(get_disk_info)
   IFS='|' read -r disk_total disk_used disk_available <<< "$disk_info"
   printf "%-18s : %.2f GB ($(t 'system.used'): %.2f GB, $(t 'system.available'): %.2f GB)\n" "$(t 'system.disk')" "$disk_total" "$disk_used" "$disk_available"
   
-  # Load Average
-  local load_info load_1min load_5min load_15min
+  # Load Average (không dùng local để có thể dùng trong build_complete_json_payload)
+  local load_info
   load_info=$(get_load_average)
   IFS='|' read -r load_1min load_5min load_15min <<< "$load_info"
   printf "%-18s : %.2f, %.2f, %.2f (1min, 5min, 15min)\n" "$(t 'system.load')" "$load_1min" "$load_5min" "$load_15min"
   
-  # Uptime
-  local uptime_str uptime_seconds
+  # Uptime (không dùng local để có thể dùng trong build_complete_json_payload)
   uptime_str=$(get_uptime)
   # Tính uptime_seconds từ /proc/uptime cho API
   if [[ -r /proc/uptime ]]; then
@@ -1287,13 +1459,13 @@ main() {
   fi
   printf "%-18s : %s\n" "$(t 'system.uptime')" "$uptime_str"
   
-  # OS Info
-  local os_info os_name os_version
+  # OS Info (không dùng local để có thể dùng trong build_complete_json_payload)
+  local os_info
   os_info=$(get_os_info)
   IFS='|' read -r os_name os_version <<< "$os_info"
   printf "%-18s : %s - %s\n" "$(t 'system.os')" "$os_name" "$os_version"
   
-  # Virtualization
+  # Virtualization (không dùng local để có thể dùng trong build_complete_json_payload)
   local virt_original virt_normalized virt_display
   IFS='|' read -r virt_original virt_normalized <<< "$(detect_virtualization)"
   if [[ "$virt_original" == "$virt_normalized" ]]; then
@@ -1303,8 +1475,8 @@ main() {
   fi
   printf "%-18s : %s\n" "$(t 'system.virtualization')" "$virt_display"
   
-  # Provider
-  local provider_original provider_normalized provider_display city region country loc public_ip
+  # Provider (không dùng local để có thể dùng trong build_complete_json_payload)
+  local provider_original provider_normalized provider_display
   IFS='|' read -r provider_original provider_normalized city region country loc public_ip <<< "$(detect_geo)"
   if [[ "$provider_original" == "$provider_normalized" ]]; then
     provider_display="$provider_normalized"
@@ -1325,7 +1497,7 @@ main() {
   local disk_io_result
   local write_r1 write_r2 write_r3 write_avg
   local read_r1 read_r2 read_r3 read_avg
-  local write_speed_mbps write_speed_mbs read_speed_mbps read_speed_mbs elapsed_time bytes_written
+  # Không dùng local cho các biến này để có thể dùng trong build_complete_json_payload
   
   disk_io_result=$(run_disk_io_test)
   IFS='|' read -r write_r1 write_r2 write_r3 write_avg read_r1 read_r2 read_r3 read_avg write_speed_mbps write_speed_mbs read_speed_mbps read_speed_mbs elapsed_time bytes_written <<< "$disk_io_result"
@@ -1363,7 +1535,8 @@ main() {
     fi
     
     # FIO đã có sẵn hoặc đã cài đặt, chạy test
-    local fio_result ioping_latency
+    # Không dùng local cho fio_result để có thể dùng trong build_complete_json_payload
+    local ioping_latency
     fio_result=$(run_fio_test)
     ioping_latency=$(run_ioping_test)
     
@@ -1382,16 +1555,29 @@ main() {
   # 4. Network Speed Test (Speedtest by Ookla)
   # --------------------------------------------------------------------------
   print_heading "4. Network Speed (Speedtest by Ookla)"
+  local st_results net_speed_json
+  net_speed_json="null"
+  
   if check_and_install_speedtest; then
-    local st_results
     st_results=$(run_speedtest_batch || true)
     if [[ -n "$st_results" ]]; then
       display_speedtest_results "$st_results"
+      # Convert speedtest results thành JSON array
+      net_speed_json=$(convert_speedtest_to_json "$st_results")
     else
       echo "[i] Speedtest CLI did not return results."
     fi
   else
     echo "[!] speedtest CLI not available. Skipping network speed tests."
+  fi
+  
+  # Sau khi tất cả tests hoàn thành, gửi report một lần với đầy đủ data
+  if [[ "$sharing_mode" != "local" ]]; then
+    echo
+    printf "[i] Sharing result (mode: %s)...\n" "$sharing_mode"
+    local json_payload
+    json_payload=$(build_complete_json_payload "$net_speed_json")
+    send_report_if_configured "$json_payload" "$sharing_mode"
   fi
 }
 
@@ -1484,101 +1670,7 @@ _display_fio_results() {
     echo "$(t 'fio.not_installed')"
   fi
 
-  # Chuẩn bị JSON payload để gửi lên API
-  # Escape các ký tự đặc biệt trong string để đảm bảo JSON hợp lệ
-  local cpu_model_escaped os_name_escaped os_version_escaped virt_type_escaped uptime_str_escaped provider_escaped
-  cpu_model_escaped=$(echo "$cpu_model" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
-  os_name_escaped=$(echo "$os_name" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
-  os_version_escaped=$(echo "$os_version" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
-  virt_type_escaped=$(echo "$virt_type" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
-  uptime_str_escaped=$(echo "$uptime_str" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
-  provider_escaped=$(echo "$provider" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
-  city_escaped=$(echo "$city" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
-  region_escaped=$(echo "$region" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
-  country_escaped=$(echo "$country" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
-  loc_escaped=$(echo "$loc" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
-  public_ip_escaped=$(echo "$public_ip" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
-  
-  local json_payload
-  json_payload=$(cat <<EOF
-{
-  "serverLabel": null,
-  "cpuModelText": "${cpu_model_escaped}",
-  "coreAmount": ${cpu_cores:-1},
-  "frequencyGhz": ${cpu_freq:-0},
-  "ramGb": ${ram_total:-0},
-  "ramAvailableGb": ${ram_available:-0},
-  "ramInfo": "${ram_total:-0} GB (Available: ${ram_available:-0} GB)",
-  "swapInfo": "${swap_total:-0} GB (Used: ${swap_used:-0} GB)",
-  "diskGb": ${disk_total:-0},
-  "diskInfo": "${disk_total:-0} GB (Used: ${disk_used:-0} GB, Available: ${disk_available:-0} GB)",
-  "loadAverage": "${load_1min:-0}, ${load_5min:-0}, ${load_15min:-0}",
-  "uptimeSeconds": ${uptime_seconds:-0},
-  "osNameText": "${os_name_escaped}",
-  "virtualizationText": "${virt_type_escaped}",
-  "providerText": "${provider_escaped}",
-  "publicIp": "${public_ip_escaped}",
-  "location": {
-    "city": "${city_escaped}",
-    "region": "${region_escaped}",
-    "country": "${country_escaped}",
-    "loc": "${loc_escaped}"
-  },
-  "payload": {
-    "cpu": {
-      "model": "${cpu_model_escaped}",
-      "cores": ${cpu_cores:-1},
-      "frequencyGHz": ${cpu_freq:-0}
-    },
-    "ram": {
-      "totalGB": ${ram_total:-0},
-      "availableGB": ${ram_available:-0}
-    },
-    "swap": {
-      "totalGB": ${swap_total:-0},
-      "usedGB": ${swap_used:-0}
-    },
-    "disk": {
-      "totalGB": ${disk_total:-0},
-      "usedGB": ${disk_used:-0},
-      "availableGB": ${disk_available:-0}
-    },
-    "loadAverage": {
-      "1min": ${load_1min:-0},
-      "5min": ${load_5min:-0},
-      "15min": ${load_15min:-0}
-    },
-    "uptime": "${uptime_str_escaped}",
-    "os": {
-      "name": "${os_name_escaped}",
-      "version": "${os_version_escaped}"
-    },
-    "virtualization": "${virt_type_escaped}",
-    "provider": "${provider_escaped}",
-    "diskIo": {
-      "writeSpeedMbps": ${write_speed_mbps:-0},
-      "writeSpeedMBs": ${write_speed_mbs:-0},
-      "readSpeedMbps": ${read_speed_mbps:-0},
-      "readSpeedMBs": ${read_speed_mbs:-0},
-      "timeSeconds": ${elapsed_time:-0},
-      "bytesWritten": ${bytes_written:-0}
-    }
-  }
-}
-EOF
-)
-
-  # Xử lý theo mode (sharing_mode đã được set ở đầu hàm)
-  case "$sharing_mode" in
-    local)
-      # Không hiển thị gì khi local mode
-      ;;
-    private|shared)
-      echo
-      printf "[i] Sharing result (mode: %s)...\n" "$sharing_mode"
-      send_report_if_configured "$json_payload" "$sharing_mode"
-      ;;
-  esac
+  # Không gửi report ở đây nữa - sẽ gửi sau khi network test hoàn thành
 }
 
 # ============================================================================
