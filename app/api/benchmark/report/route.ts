@@ -343,17 +343,21 @@ export async function POST(request: NextRequest) {
   const normalizedDiskIo = normalizeJsonbValue(data.diskIo);
   const normalizedFio = normalizeJsonbValue(data.fio);
   const normalizedNetSpeed = normalizeJsonbValue(data.netSpeed);
-  // Ưu tiên systemInfo top-level, fallback vào payload.systemInfo nếu có
-  const payloadSystemInfo =
-    payloadObject &&
-    typeof payloadObject === "object" &&
-    "systemInfo" in payloadObject
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (payloadObject as Record<string, any>).systemInfo
-      : null;
-  const normalizedSystemInfo = normalizeJsonbValue(
-    data.systemInfo ?? payloadSystemInfo
-  );
+
+  // Ưu tiên systemInfo top-level, nếu không có thì:
+  // - Nếu payload có systemInfo dùng nó
+  // - Nếu payload không có systemInfo nhưng là object (có cpu/ram/...) thì dùng toàn bộ payload
+  let systemInfoSource: unknown = data.systemInfo ?? null;
+  if (!systemInfoSource && payloadObject && typeof payloadObject === "object") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const maybeSystemInfo = (payloadObject as Record<string, any>).systemInfo;
+    systemInfoSource =
+      maybeSystemInfo && typeof maybeSystemInfo === "object"
+        ? maybeSystemInfo
+        : payloadObject;
+  }
+  const normalizedSystemInfo = normalizeJsonbValue(systemInfoSource);
+
   const normalizedSummary = normalizeJsonbValue(data.summary);
 
   // Debug logging - validate JSON có thể stringify được không
