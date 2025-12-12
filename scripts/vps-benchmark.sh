@@ -1224,41 +1224,6 @@ build_complete_json_payload() {
     "diskIo": ${payload_disk_io},
     "fio": ${payload_fio},
     "netSpeed": ${payload_net_speed}
-  },
-  "payload": {
-    "cpu": {
-      "model": "${cpu_model_escaped}",
-      "cores": ${cpu_cores:-1},
-      "frequencyGHz": ${cpu_freq:-0}
-    },
-    "ram": {
-      "totalGB": ${ram_total:-0},
-      "availableGB": ${ram_available:-0}
-    },
-    "swap": {
-      "totalGB": ${swap_total:-0},
-      "usedGB": ${swap_used:-0}
-    },
-    "disk": {
-      "totalGB": ${disk_total:-0},
-      "usedGB": ${disk_used:-0},
-      "availableGB": ${disk_available:-0}
-    },
-    "loadAverage": {
-      "1min": ${load_1min:-0},
-      "5min": ${load_5min:-0},
-      "15min": ${load_15min:-0}
-    },
-    "uptime": "${uptime_str_escaped}",
-    "os": {
-      "name": "${os_name_escaped}",
-      "version": "${os_version_escaped}"
-    },
-    "virtualization": "${virt_type_escaped}",
-    "provider": "${provider_escaped}",
-    "diskIo": ${payload_disk_io},
-    "fio": ${payload_fio},
-    "netSpeed": ${payload_net_speed}
   }
 }
 EOF

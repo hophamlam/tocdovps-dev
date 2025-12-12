@@ -3,6 +3,12 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { BenchmarkPayload } from "@/lib/types/benchmark";
+import {
+  getOrCreateOS,
+  getOrCreateProvider,
+  getOrCreateVirtualization,
+  getOrCreateRegion,
+} from "@/lib/db/lookup-helpers";
 
 /**
  * Giới hạn kích thước request body (10MB)
@@ -156,8 +162,9 @@ const reportSchema = z.object({
   fio: z.unknown().optional(),
   netSpeed: z.unknown().optional(),
   // payload có thể là network test payload hoặc system info payload
-  // Cho phép bất kỳ structure nào để linh hoạt
-  payload: z.unknown().optional(),
+  // Cho phép bất kỳ structure nào để linh hoạt (object, array, number, string, null, undefined)
+  // Dùng z.any() để accept mọi giá trị mà không validate
+  payload: z.any().optional(),
 });
 
 /**
@@ -318,18 +325,14 @@ export async function POST(request: NextRequest) {
 
   const data = parsed.data;
 
-  // Generate slugs từ text fields
+  // Generate slugs từ text fields (giữ lại để backward compatibility)
   const osSlug = slugify(data.osNameText);
   const cpuSlug = slugify(data.cpuModelText);
   const providerSlug = slugify(data.providerText);
   const virtualizationSlug = slugify(data.virtualizationText);
 
-  // Lấy visibility từ header (private/shared), mặc định là 'shared' nếu không có
-  const visibilityHeader = request.headers.get("x-visibility");
-  const visibility = visibilityHeader === "private" ? "private" : "shared";
-
-  // Normalize jsonb values và log để debug
   // Parse payload nếu là string để có thể lấy systemInfo nested
+  // Cần parse sớm để có thể dùng cho region lookup
   let payloadObject: unknown = data.payload ?? null;
   if (typeof payloadObject === "string") {
     try {
@@ -340,6 +343,52 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Lookup hoặc tự động tạo OS/Provider/Virtualization trong lookup tables
+  // Nếu lookup tables chưa tồn tại, các hàm này sẽ return null và không crash
+  let osId: string | null = null;
+  let providerId: string | null = null;
+  let virtualizationId: string | null = null;
+  let regionId: string | null = null;
+
+  try {
+    // Tự động tạo OS nếu chưa có
+    osId = await getOrCreateOS(data.osNameText);
+
+    // Tự động tạo Provider nếu chưa có
+    providerId = await getOrCreateProvider(data.providerText);
+
+    // Tự động tạo Virtualization nếu chưa có
+    virtualizationId = await getOrCreateVirtualization(data.virtualizationText);
+
+    // Tự động tạo Region nếu có location info trong payload
+    if (payloadObject && typeof payloadObject === "object") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const payload = payloadObject as Record<string, any>;
+      const location = payload.location || payload.systemInfo?.location;
+      if (location && typeof location === "object") {
+        regionId = await getOrCreateRegion(
+          location.city,
+          location.region,
+          location.country,
+          location.countryCode,
+          location.latitude,
+          location.longitude
+        );
+      }
+    }
+  } catch (error) {
+    // Log error nhưng không fail request nếu lookup tables chưa tồn tại
+    console.warn(
+      `[API] Warning: Could not create lookup records (tables may not exist yet):`,
+      error instanceof Error ? error.message : error
+    );
+  }
+
+  // Lấy visibility từ header (private/shared), mặc định là 'shared' nếu không có
+  const visibilityHeader = request.headers.get("x-visibility");
+  const visibility = visibilityHeader === "private" ? "private" : "shared";
+
+  // Normalize jsonb values và log để debug
   const normalizedDiskIo = normalizeJsonbValue(data.diskIo);
   const normalizedFio = normalizeJsonbValue(data.fio);
   const normalizedNetSpeed = normalizeJsonbValue(data.netSpeed);

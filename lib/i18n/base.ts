@@ -10,7 +10,7 @@ export const baseTranslations = {
     "header.locale.en": "EN",
     "hero.title": "Đánh giá tốc độ VPS một cách minh bạch",
     "hero.subtitle":
-      "tocdovps.dev là dự án cá nhân giúp bạn nhìn rõ hiệu năng thực tế của các gói VPS: độ trễ, tốc độ mạng, I/O… được kiểm tra và trình bày một cách dễ hiểu. Bắt đầu benchmark VPS của bạn với tocdovps.dev.",
+      "Một dự án cá nhân giúp bạn nhìn rõ hiệu năng thực tế của các gói VPS: độ trễ, tốc độ mạng, I/O… được kiểm tra và trình bày một cách dễ hiểu. Bắt đầu benchmark VPS của bạn với tocdovps.dev.",
     "hero.ctaPrimary": "Khám phá benchmark (Coming soon)",
     "hero.ctaSecondary": "Tài liệu",
     "hero.ctaPrimaryNote": "Bắt đầu benchmark VPS của bạn với tocdovps.dev.",
@@ -390,7 +390,7 @@ export const baseTranslations = {
     "header.locale.en": "EN",
     "hero.title": "Transparent VPS performance benchmarking",
     "hero.subtitle":
-      "tocdovps.dev is a personal project to reveal the real-world performance of VPS plans – latency, network throughput, disk I/O – presented in a clear and honest way. Start benchmarking your VPS with tocdovps.dev.",
+      "A side project to reveal the real-world performance of VPS plans – latency, network throughput, disk I/O – presented in a clear and honest way. Start benchmarking your VPS with tocdovps.dev.",
     "hero.ctaPrimary": "Explore benchmarks (Coming soon)",
     "hero.ctaSecondary": "Documentation",
     "hero.ctaPrimaryNote": "Start benchmarking your VPS with tocdovps.dev.",

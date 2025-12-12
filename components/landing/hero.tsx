@@ -37,15 +37,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   return (
     <section className="relative border-b border-border bg-gradient-to-b from-background via-background to-muted/40 overflow-hidden">
       {/* Grid background overlay - adaptive cho light/dark mode */}
-      <div className="pointer-events-none absolute inset-0 [background-size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] bg-[linear-gradient(to_right,rgb(0_0_0/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(0_0_0/0.05)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgb(255_255_255/0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.08)_1px,transparent_1px)]"></div>
+      <div className="pointer-events-none absolute inset-0 [background-size:20px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] bg-[linear-gradient(to_right,rgb(0_0_0/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(0_0_0/0.05)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgb(255_255_255/0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.08)_1px,transparent_1px)]"></div>
 
       <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-8 px-4 pb-20 pt-24 text-center md:pb-32 md:pt-32">
         {totalBenchmarks > 0 ? (
           <Link
             href="/leaderboard"
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1 text-xs text-muted-foreground shadow-sm backdrop-blur transition hover:bg-card hover:text-foreground"
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1 text-sm text-muted-foreground shadow-sm backdrop-blur transition hover:bg-card hover:text-foreground"
           >
             <span>
+              🚀{" "}
               {t("hero.benchmarkCount").replace(
                 "{count}",
                 totalBenchmarks.toLocaleString()

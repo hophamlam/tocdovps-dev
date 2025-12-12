@@ -12,7 +12,8 @@
     "git:new-feature": "bash scripts/git-workflow.sh new-feature",
     "git:new-fix": "bash scripts/git-workflow.sh new-fix",
     "git:status": "bash scripts/git-workflow.sh status",
-    "git:sync": "bash scripts/git-workflow.sh sync-main"
+    "git:sync": "bash scripts/git-workflow.sh sync-main",
+    "migrate:apply": "node scripts/apply-migration.js"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",
@@ -39,6 +40,7 @@
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "remark-gfm": "^4.0.1",
+    "svg-dotted-map": "^2.0.1",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.1.13"
   },
