@@ -58,59 +58,51 @@ export const TechStack: React.FC<TechStackProps> = ({
     );
   }
 
-  // Marquee variant (default) - sử dụng CSS animation đơn giản để tránh lag
-  // Duplicate items để tạo seamless loop
-  const duplicatedTechs = React.useMemo(
-    () => [...technologies, ...technologies],
-    []
-  );
-
+  // Default variant - hiển thị 6 items với border, không loop
   return (
-    <div className={cn("relative flex w-full overflow-hidden py-8", className)}>
-      {/* Gradient overlay để tạo fade effect */}
-      <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-20 bg-gradient-to-r from-background to-transparent" />
-      <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-background to-transparent" />
-
-      {/* Marquee container với CSS animation */}
-      <div
-        className="flex items-center gap-12 whitespace-nowrap"
-        style={{
-          animation: "marquee 40s linear infinite",
-        }}
-      >
-        {duplicatedTechs.map((tech, index) => (
-          <div key={`${tech.name}-${index}`} className="flex-shrink-0">
-            <TechBadge tech={tech} />
-          </div>
-        ))}
-      </div>
+    <div
+      className={cn(
+        "flex items-center justify-center gap-4 flex-wrap py-8 px-4",
+        className
+      )}
+    >
+      {technologies.map((tech, index) => (
+        <TechBadge key={tech.name} tech={tech} />
+      ))}
     </div>
   );
 };
 
 /**
  * Component hiển thị một tech badge với logo SVG - style Aceternity
- * Icon + text đơn giản, không background, không border
+ * Icon + text với border
  * @param tech - Object chứa name và logo của công nghệ
  */
 const TechBadge: React.FC<{ tech: Technology }> = ({ tech }) => {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-3 text-sm font-medium text-muted-foreground",
-        "transition-all duration-300",
-        "hover:text-foreground",
+        "inline-flex items-center gap-3 rounded-lg border border-border/60 bg-background/50 px-4 py-2 text-sm font-medium text-muted-foreground",
+        "backdrop-blur-sm transition-all duration-300",
+        "hover:border-primary/50 hover:bg-primary/5 hover:text-foreground",
         "group"
       )}
     >
       {tech.logoPath ? (
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center transition-opacity duration-300 group-hover:opacity-80">
+        <div className="flex h-5 w-5 shrink-0 items-center justify-center transition-opacity duration-300 group-hover:opacity-80">
           <Image
             src={tech.logoPath}
             alt={`${tech.name} logo`}
-            width={24}
-            height={24}
-            className="h-6 w-6 object-contain"
+            width={20}
+            height={20}
+            className={cn(
+              "h-5 w-5 object-contain transition-all duration-300",
+              // Adapt SVG theo theme
+              // Light mode: SVG tối (mặc định)
+              "opacity-60",
+              // Dark mode: invert để SVG sáng lên
+              "dark:opacity-80 dark:brightness-0 dark:invert dark:contrast-200"
+            )}
           />
         </div>
       ) : null}
