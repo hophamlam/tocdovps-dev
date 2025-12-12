@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
 
+const isPreview = process.env.VERCEL_ENV === "preview";
+
 /**
  * Cấu hình Next.js với MDX support
  * Cho phép sử dụng .mdx và .md files như pages hoặc imports
@@ -11,6 +13,12 @@ import createMDX from "@next/mdx";
 const nextConfig: NextConfig = {
   // Configure pageExtensions để include markdown và MDX files
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+  // Expose bypass secret cho staging/preview để hiển thị script đầy đủ trên client
+  env: {
+    NEXT_PUBLIC_AUTOMATION_BYPASS_SECRET: isPreview
+      ? process.env.VERCEL_AUTOMATION_BYPASS_SECRET ?? ""
+      : "",
+  },
   // Optionally, add any other Next.js config below
 };
 
