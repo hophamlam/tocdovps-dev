@@ -162,12 +162,10 @@ const reportSchema = z
     diskIo: z.unknown().optional(),
     fio: z.unknown().optional(),
     netSpeed: z.unknown().optional(),
-    // payload có thể là network test payload hoặc system info payload
-    // Cho phép bất kỳ structure nào để linh hoạt
-    // Không validate payload field - accept mọi giá trị
-    payload: z.unknown().optional(),
+    // payload không được định nghĩa ở đây - sẽ được accept qua .passthrough()
+    // Cho phép bất kỳ structure nào để linh hoạt (object, array, number, string, null, undefined)
   })
-  .passthrough(); // Cho phép các field khác không được định nghĩa trong schema
+  .passthrough(); // Cho phép các field khác không được định nghĩa trong schema (bao gồm payload)
 
 /**
  * Lấy client IP từ request headers
