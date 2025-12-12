@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import { getBaseUrl } from "@/lib/base-url";
+import { TechStack } from "./tech-stack";
+import { FlickeringGrid } from "@/components/ui/flickering-grid";
 
 type HeroSectionProps = {
   totalBenchmarks?: number;
@@ -23,6 +25,34 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const scriptCommand = `bash <(curl -fsSL ${baseUrl}/install)`;
   const typingLine = `$ ${scriptCommand}`;
   const [copied, setCopied] = useState(false);
+  const [gridColor, setGridColor] = useState("rgb(0, 0, 0)");
+
+  /**
+   * Detect theme và set màu phù hợp cho FlickeringGrid
+   * Light mode: màu tối (foreground)
+   * Dark mode: màu sáng (foreground)
+   */
+  useEffect(() => {
+    const updateGridColor = () => {
+      if (typeof window === "undefined") return;
+      const isDark = document.documentElement.classList.contains("dark");
+      // Sử dụng màu foreground tương đương với theme
+      // Light: rgb(87, 87, 87) - tương đương oklch(0.3438 0.0269 95.7226)
+      // Dark: rgb(206, 206, 206) - tương đương oklch(0.8074 0.0142 93.0137)
+      setGridColor(isDark ? "rgb(206, 206, 206)" : "rgb(87, 87, 87)");
+    };
+
+    updateGridColor();
+
+    // Listen for theme changes
+    const observer = new MutationObserver(updateGridColor);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const handleCopy = async () => {
     try {
@@ -36,8 +66,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <section className="relative border-b border-border bg-gradient-to-b from-background via-background to-muted/40 overflow-hidden">
-      {/* Grid background overlay - adaptive cho light/dark mode */}
-      <div className="pointer-events-none absolute inset-0 [background-size:20px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] bg-[linear-gradient(to_right,rgb(0_0_0/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(0_0_0/0.05)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgb(255_255_255/0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.08)_1px,transparent_1px)]"></div>
+      {/* Flickering Grid background overlay - adaptive cho light/dark mode */}
+      <div className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_80%_70%_at_50%_15%,#000_50%,transparent_100%)]">
+        <FlickeringGrid
+          className="absolute inset-0 size-full"
+          squareSize={15}
+          gridGap={5}
+          color={gridColor}
+          maxOpacity={0.05}
+          flickerChance={0.6}
+        />
+      </div>
 
       <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-8 px-4 pb-20 pt-24 text-center md:pb-32 md:pt-32">
         {totalBenchmarks > 0 ? (
@@ -104,6 +143,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             {t("hero.ctaSecondary")}
           </Link>
         </div>
+
+        {/* Tech Stack Section - Logo Cloud */}
+        <TechStack className="mt-8" />
       </div>
     </section>
   );
