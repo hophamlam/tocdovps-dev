@@ -58,7 +58,7 @@ export const TechStack: React.FC<TechStackProps> = ({
     );
   }
 
-  // Default variant - hiển thị 6 items với border, không loop
+  // Default variant - hiển thị 6 items, không border, không loop
   return (
     <div
       className={cn(
@@ -75,16 +75,16 @@ export const TechStack: React.FC<TechStackProps> = ({
 
 /**
  * Component hiển thị một tech badge với logo SVG - style Aceternity
- * Icon + text với border
+ * Icon + text đơn giản, không border, không background - less distracted
  * @param tech - Object chứa name và logo của công nghệ
  */
 const TechBadge: React.FC<{ tech: Technology }> = ({ tech }) => {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-3 rounded-lg border border-border/60 bg-background/50 px-4 py-2 text-sm font-medium text-muted-foreground",
-        "backdrop-blur-sm transition-all duration-300",
-        "hover:border-primary/50 hover:bg-primary/5 hover:text-foreground",
+        "inline-flex items-center gap-3 px-4 py-2 text-sm font-medium text-muted-foreground",
+        "transition-all duration-300",
+        "hover:text-foreground",
         "group"
       )}
     >

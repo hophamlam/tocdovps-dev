@@ -7,6 +7,7 @@ import { useI18n } from "@/components/i18n/i18n-provider";
 import { getBaseUrl } from "@/lib/base-url";
 import { TechStack } from "./tech-stack";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
+import { Button } from "@/components/ui/button";
 
 type HeroSectionProps = {
   totalBenchmarks?: number;
@@ -136,12 +137,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               )}
             </span>
           </button>
-          <Link
-            href="/docs"
-            className="inline-flex items-center justify-center gap-2 rounded-md px-6 py-3 text-sm font-medium transition hover:bg-muted"
-          >
-            {t("hero.ctaSecondary")}
-          </Link>
+          <Button variant="outline" size="lg" asChild>
+            <Link href="/docs">{t("hero.ctaSecondary")}</Link>
+          </Button>
         </div>
 
         {/* Tech Stack Section - Logo Cloud */}
