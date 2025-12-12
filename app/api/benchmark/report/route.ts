@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { sql } from "@neondatabase/serverless";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { BenchmarkPayload } from "@/lib/types/benchmark";
 
