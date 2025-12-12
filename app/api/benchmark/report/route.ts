@@ -332,7 +332,18 @@ export async function POST(request: NextRequest) {
   const normalizedDiskIo = normalizeJsonbValue(data.diskIo);
   const normalizedFio = normalizeJsonbValue(data.fio);
   const normalizedNetSpeed = normalizeJsonbValue(data.netSpeed);
-  const normalizedSystemInfo = normalizeJsonbValue(data.systemInfo);
+  // Ưu tiên systemInfo top-level, fallback vào payload.systemInfo nếu có
+  const payloadSystemInfo =
+    data.payload &&
+    typeof data.payload === "object" &&
+    data.payload !== null &&
+    "systemInfo" in data.payload
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (data.payload as Record<string, any>).systemInfo
+      : null;
+  const normalizedSystemInfo = normalizeJsonbValue(
+    data.systemInfo ?? payloadSystemInfo
+  );
   const normalizedSummary = normalizeJsonbValue(data.summary);
 
   // Debug logging - validate JSON có thể stringify được không
