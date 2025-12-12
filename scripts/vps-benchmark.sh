@@ -1190,6 +1190,42 @@ build_complete_json_payload() {
   "fio": ${payload_fio},
   "netSpeed": ${payload_net_speed},
   "payload": {
+    "systemInfo": {
+      "cpuModel": "${cpu_model_escaped}",
+      "cores": ${cpu_cores:-1},
+      "frequencyGHz": ${cpu_freq:-0},
+      "ramGB": ${ram_total:-0},
+      "ramAvailableGB": ${ram_available:-0},
+      "swapGB": ${swap_total:-0},
+      "swapUsedGB": ${swap_used:-0},
+      "diskTotalGB": ${disk_total:-0},
+      "diskUsedGB": ${disk_used:-0},
+      "diskAvailableGB": ${disk_available:-0},
+      "loadAverage": {
+        "1min": ${load_1min:-0},
+        "5min": ${load_5min:-0},
+        "15min": ${load_15min:-0}
+      },
+      "uptimeSeconds": ${uptime_seconds:-0},
+      "os": {
+        "name": "${os_name_escaped}",
+        "version": "${os_version_escaped}"
+      },
+      "virtualization": "${virt_type_escaped}",
+      "provider": "${provider_escaped}",
+      "location": {
+        "city": "${city_escaped}",
+        "region": "${region_escaped}",
+        "country": "${country_escaped}",
+        "loc": "${loc_escaped}",
+        "publicIp": "${public_ip_escaped}"
+      }
+    },
+    "diskIo": ${payload_disk_io},
+    "fio": ${payload_fio},
+    "netSpeed": ${payload_net_speed}
+  },
+  "payload": {
     "cpu": {
       "model": "${cpu_model_escaped}",
       "cores": ${cpu_cores:-1},
