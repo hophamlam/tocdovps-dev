@@ -58,18 +58,46 @@ export const TechStack: React.FC<TechStackProps> = ({
     );
   }
 
-  // Default variant - hiển thị 6 items, không border, không loop
+  // Default variant - marquee trên mobile, static trên desktop
+  // Duplicate items để tạo seamless loop cho marquee
+  const duplicatedTechs = React.useMemo(
+    () => [...technologies, ...technologies],
+    []
+  );
+
   return (
-    <div
-      className={cn(
-        "flex items-center justify-center gap-4 flex-wrap py-8 px-4",
-        className
-      )}
-    >
-      {technologies.map((tech, index) => (
-        <TechBadge key={tech.name} tech={tech} />
-      ))}
-    </div>
+    <>
+      {/* Desktop: hiển thị static, không loop */}
+      <div
+        className={cn(
+          "hidden items-center justify-center gap-4 flex-wrap py-8 px-4 md:flex",
+          className
+        )}
+      >
+        {technologies.map((tech, index) => (
+          <TechBadge key={tech.name} tech={tech} />
+        ))}
+      </div>
+
+      {/* Mobile: marquee với CSS animation - loop mượt, không fade */}
+      <div
+        className={cn("flex w-full overflow-hidden py-8 md:hidden", className)}
+      >
+        {/* Marquee container với CSS animation */}
+        <div
+          className="flex items-center gap-8 whitespace-nowrap"
+          style={{
+            animation: "marquee 30s linear infinite",
+          }}
+        >
+          {duplicatedTechs.map((tech, index) => (
+            <div key={`${tech.name}-${index}`} className="flex-shrink-0">
+              <TechBadge tech={tech} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
   );
 };
 

@@ -110,11 +110,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
           <button
             type="button"
             onClick={handleCopy}
-            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 sm:w-auto sm:px-6"
           >
             <span className="truncate font-mono text-xs sm:text-sm">
               {scriptCommand}
@@ -137,7 +137,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               )}
             </span>
           </button>
-          <Button variant="outline" size="lg" asChild>
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full sm:w-auto"
+            asChild
+          >
             <Link href="/docs">{t("hero.ctaSecondary")}</Link>
           </Button>
         </div>

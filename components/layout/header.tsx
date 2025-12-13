@@ -2,12 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { MoonIcon, SunIcon } from "lucide-react";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import type { Locale } from "@/lib/i18n/config";
 import { useTheme } from "@/components/theme/theme-provider";
 import { Toggle } from "@/components/ui/toggle";
 import { getBaseUrl } from "@/lib/base-url";
+import { MobileNav } from "@/components/layout/mobile-nav";
 
 /**
  * Component Header hiển thị brand, menu đơn giản,
@@ -104,6 +106,8 @@ export const Header: React.FC = () => {
               {t("header.locale.vi")}
             </span>
           </Toggle>
+          {/* Mobile menu button - ngoài cùng bên phải, sau translation */}
+          <MobileNav />
         </div>
       </div>
     </header>
