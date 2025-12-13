@@ -163,10 +163,10 @@ const reportSchema = z
     fio: z.unknown().optional(),
     netSpeed: z.unknown().optional(),
     // payload: accept mọi giá trị (object, array, number, string, null, undefined, hoặc không có)
-    // Dùng z.any() để bypass validation hoàn toàn
-    payload: z.any().optional(),
+    // Dùng z.any() để bypass validation hoàn toàn - không validate type
+    payload: z.any().optional().default(undefined),
   })
-  .catchall(z.any()); // Cho phép mọi field khác với bất kỳ giá trị nào
+  .passthrough(); // Cho phép các field khác không được định nghĩa trong schema
 
 /**
  * Lấy client IP từ request headers
@@ -205,6 +205,16 @@ const getClientIp = (request: NextRequest): string | null => {
  */
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
+
+  // Log ngay đầu function để verify code được chạy
+  console.log(
+    `[API] POST /api/benchmark/report called at ${new Date().toISOString()}`
+  );
+  console.log(
+    `[API] Schema definition: payload field exists: ${
+      "payload" in reportSchema.shape
+    }`
+  );
 
   // Log request info (không log sensitive data)
   const userAgent = request.headers.get("user-agent") || "unknown";
