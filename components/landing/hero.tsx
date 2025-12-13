@@ -79,7 +79,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         />
       </div>
 
-      <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-8 px-4 pb-20 pt-24 text-center md:pb-32 md:pt-32">
+      <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-8 px-4 pb-4 pt-24 text-center md:gap-12 md:pb-8 md:pt-28">
         {totalBenchmarks > 0 ? (
           <Link
             href="/leaderboard"
@@ -101,16 +101,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <h1 className="text-balance text-5xl font-semibold tracking-tight md:text-7xl">
             {t("hero.title")}
           </h1>
-          <p className="mx-auto max-w-2xl text-sm text-muted-foreground md:text-base">
+          <p className="mx-auto max-w-2xl text-base md:text-lg text-muted-foreground">
             {t("hero.subtitle")}
           </p>
         </div>
 
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+        <div className="flex w-full flex-col gap-3 pb-0 sm:flex-row sm:items-center sm:justify-center">
           <button
             type="button"
             onClick={handleCopy}
@@ -148,7 +148,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
 
         {/* Tech Stack Section - Logo Cloud */}
-        <TechStack className="mt-8" />
+        <TechStack className="-mt-4 md:mt-0" />
       </div>
     </section>
   );

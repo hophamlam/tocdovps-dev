@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { Marquee } from "@/components/ui/marquee";
 
 /**
  * Type cho technology với logo path hoặc emoji
@@ -58,19 +59,12 @@ export const TechStack: React.FC<TechStackProps> = ({
     );
   }
 
-  // Default variant - marquee trên mobile, static trên desktop
-  // Duplicate items để tạo seamless loop cho marquee
-  const duplicatedTechs = React.useMemo(
-    () => [...technologies, ...technologies],
-    []
-  );
-
   return (
     <>
       {/* Desktop: hiển thị static, không loop */}
       <div
         className={cn(
-          "hidden items-center justify-center gap-4 flex-wrap py-8 px-4 md:flex",
+          "hidden items-center justify-center gap-4 flex-wrap pt-2 pb-4 px-4 md:flex",
           className
         )}
       >
@@ -79,23 +73,13 @@ export const TechStack: React.FC<TechStackProps> = ({
         ))}
       </div>
 
-      {/* Mobile: marquee với CSS animation - loop mượt, không fade */}
-      <div
-        className={cn("flex w-full overflow-hidden py-8 md:hidden", className)}
-      >
-        {/* Marquee container với CSS animation */}
-        <div
-          className="flex items-center gap-8 whitespace-nowrap"
-          style={{
-            animation: "marquee 30s linear infinite",
-          }}
-        >
-          {duplicatedTechs.map((tech, index) => (
-            <div key={`${tech.name}-${index}`} className="flex-shrink-0">
-              <TechBadge tech={tech} />
-            </div>
+      {/* Mobile: marquee với Magic UI component - loop mượt, không fade */}
+      <div className={cn("w-full pt-2 pb-4 md:hidden", className)}>
+        <Marquee repeat={3} pauseOnHover={false} className="[--gap:1.5rem]">
+          {technologies.map((tech) => (
+            <TechBadge key={tech.name} tech={tech} />
           ))}
-        </div>
+        </Marquee>
       </div>
     </>
   );
