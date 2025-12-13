@@ -166,7 +166,7 @@ const reportSchema = z
     // Dùng z.any() để bypass validation hoàn toàn
     payload: z.any().optional(),
   })
-  .passthrough(); // Cho phép các field khác không được định nghĩa trong schema
+  .catchall(z.any()); // Cho phép mọi field khác với bất kỳ giá trị nào
 
 /**
  * Lấy client IP từ request headers
@@ -293,26 +293,39 @@ export async function POST(request: NextRequest) {
   }
 
   // Validate payload với Zod schema
+  // Debug: log để verify schema đang được sử dụng
+  console.log(`[API] Validating request from ${getClientIp(request)}`);
+  console.log(
+    `[API] Body has payload field:`,
+    body && typeof body === "object" && body !== null && "payload" in body
+  );
+
   const parsed = reportSchema.safeParse(body);
   if (!parsed.success) {
     const errorDetails = parsed.error.flatten();
-    console.warn(
+    console.error(
       `[API] Validation error from ${getClientIp(request)}:`,
-      errorDetails.fieldErrors
+      JSON.stringify(errorDetails.fieldErrors, null, 2)
+    );
+    console.error(
+      `[API] Full Zod error issues:`,
+      JSON.stringify(parsed.error.issues, null, 2)
     );
     // Debug: log body structure để debug
-    console.warn(`[API] Body keys:`, Object.keys(body || {}));
-    console.warn(
+    console.error(`[API] Body keys:`, Object.keys(body || {}));
+    console.error(
       `[API] Body has payload:`,
       body && typeof body === "object" && body !== null && "payload" in body
     );
     if (body && typeof body === "object" && "payload" in body) {
-      console.warn(`[API] Payload type:`, typeof body.payload);
-      console.warn(
+      console.error(`[API] Payload type:`, typeof body.payload);
+      console.error(
         `[API] Payload keys:`,
         body.payload ? Object.keys(body.payload) : "null"
       );
     }
+    // Log full error để debug
+    console.error(`[API] Full Zod error:`, parsed.error.issues);
 
     return NextResponse.json(
       {

@@ -58,21 +58,22 @@ export const Footer: React.FC = () => {
         {/* Copyright */}
         <div className="mt-8 border-t border-border/60 pt-6">
           <p className="text-center text-xs text-muted-foreground">
+            {t("footer.copyright.text")}{" "}
             <Link
-              href="https://github.com/hophamlam/tocdovps-dev"
+              href="https://github.com/hophamlam/vps-benchmark"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline"
-              aria-label="Open source on GitHub"
+              className="underline hover:text-foreground transition-colors"
+              aria-label="View source code on GitHub"
             >
               {t("footer.copyright.openSource")}
             </Link>{" "}
-            {t("footer.copyright.by")}{" "}
+            {t("footer.copyright.byText")}{" "}
             <Link
               href="https://hophamlam.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline"
+              className="underline hover:text-foreground transition-colors"
               aria-label="Visit hophamlam.com"
             >
               hophamlam
