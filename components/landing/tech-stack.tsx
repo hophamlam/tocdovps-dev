@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Marquee } from "@/components/ui/marquee";
 
@@ -12,6 +13,7 @@ type Technology = {
   name: string;
   logoPath?: string; // Path đến SVG trong public/icons folder
   emoji?: string; // Emoji fallback
+  url: string; // URL đến trang chủ của công nghệ
 };
 
 /**
@@ -19,12 +21,12 @@ type Technology = {
  * Sử dụng 6 SVG logos từ public/icons folder
  */
 const technologies: Technology[] = [
-  { name: "Next.js", logoPath: "/icons/nextdotjs.svg" },
-  { name: "shadcn/ui", logoPath: "/icons/shadcnui.svg" },
-  { name: "Vercel", logoPath: "/icons/vercel.svg" },
-  { name: "Neon", logoPath: "/icons/neon-logomark-light-mono.svg" },
-  { name: "Nextra", logoPath: "/icons/nextra.svg" },
-  { name: "Upstash", logoPath: "/icons/upstash.svg" },
+  { name: "Next.js", logoPath: "/icons/nextdotjs.svg", url: "https://nextjs.org" },
+  { name: "shadcn/ui", logoPath: "/icons/shadcnui.svg", url: "https://ui.shadcn.com" },
+  { name: "Vercel", logoPath: "/icons/vercel.svg", url: "https://vercel.com" },
+  { name: "Neon", logoPath: "/icons/neon-logomark-light-mono.svg", url: "https://neon.tech" },
+  { name: "Nextra", logoPath: "/icons/nextra.svg", url: "https://nextra.site" },
+  { name: "Upstash", logoPath: "/icons/upstash.svg", url: "https://upstash.com" },
 ];
 
 type TechStackProps = {
@@ -92,7 +94,10 @@ export const TechStack: React.FC<TechStackProps> = ({
  */
 const TechBadge: React.FC<{ tech: Technology }> = ({ tech }) => {
   return (
-    <div
+    <Link
+      href={tech.url}
+      target="_blank"
+      rel="noopener noreferrer"
       className={cn(
         "inline-flex items-center gap-3 px-4 py-2 text-sm font-medium text-muted-foreground",
         "transition-all duration-300",
@@ -119,6 +124,6 @@ const TechBadge: React.FC<{ tech: Technology }> = ({ tech }) => {
         </div>
       ) : null}
       <span className="whitespace-nowrap">{tech.name}</span>
-    </div>
+    </Link>
   );
 };

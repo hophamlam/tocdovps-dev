@@ -1,87 +1,55 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 export const runtime = "nodejs";
 
 /**
- * Endpoint phục vụ shell script cài đặt tocdovps.dev
- * Tương tự phong cách tocdo.io/install - script ngắn gọn tải và chạy benchmark
+ * Endpoint phục vụ script benchmark với REPORT_URL được inject tự động
+ * VERCEL_BYPASS không được inject để tránh lộ token (user phải tự set nếu cần)
  *
  * Usage:
- *   - Default (with prompt): bash <(curl -fsSL https://tocdovps.dev/install)
- *   - Bypass prompt: bash <(curl -fsSL "https://tocdovps.dev/install?mode=shared")
+ * - Production: bash <(curl -fsSL https://tocdovps.dev/install)
+ * - Staging: VERCEL_BYPASS="..." bash <(curl -fsSL https://staging.tocdovps.dev/install)
  *
- * Query Parameters:
- *   - mode: Sharing mode - "local" (no share), "private" (share with URL only), "shared" (public)
- *   - auto: Skip confirmation prompt (true/false)
- *   - skip-disk: Skip disk I/O test (true/false)
- *   - server-label: Custom server label
- *
- * @param req - NextRequest với query parameters
- * @returns Response chứa nội dung bash script với content-type text/x-shellscript
+ * @param req - NextRequest
+ * @returns Response chứa bash script với REPORT_URL được set tự động (nếu có)
  */
 export async function GET(req: NextRequest): Promise<Response> {
-  // Lấy domain từ request để tự động detect (có thể là localhost trong dev hoặc tocdovps.dev trong production)
-  const host = req.headers.get("host") || "tocdovps.dev";
-  const protocol = host.includes("localhost") ? "http" : "https";
+  try {
+    // Đọc script từ thư mục scripts của project
+    const scriptPath = resolve(process.cwd(), "scripts", "vps-benchmark.sh");
+    let content = readFileSync(scriptPath, "utf8");
 
-  // Parse query parameters
-  const { searchParams } = new URL(req.url);
-  const mode = searchParams.get("mode"); // local, private, shared
-  const auto = searchParams.get("auto") === "true";
-  const skipDisk = searchParams.get("skip-disk") === "true";
-  const serverLabel = searchParams.get("server-label");
+    // Lấy REPORT_URL từ environment variable (chỉ có trên server)
+    // Không inject VERCEL_BYPASS để tránh lộ token - user phải tự set nếu cần
+    const reportUrl =
+      process.env.REPORT_URL || "https://www.tocdovps.dev/api/benchmark/report";
 
-  // Kiểm tra bypass secret từ header hoặc env var (cho Vercel deployment protection)
-  const bypassSecret =
-    req.headers.get("x-vercel-protection-bypass") ||
-    process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+    // Chỉ inject REPORT_URL nếu khác với default (staging environment)
+    if (reportUrl !== "https://www.tocdovps.dev/api/benchmark/report") {
+      const injectScript = `#!/bin/bash
+# Auto-injected REPORT_URL (from server-side, not hardcoded)
+export REPORT_URL="${reportUrl}"
 
-  // Build URL với query params nếu có
-  let benchmarkUrl = `${protocol}://${host}/scripts/vps-benchmark.sh`;
-  const urlParams = new URLSearchParams();
-  if (mode) urlParams.append("mode", mode);
-  if (auto) urlParams.append("auto", "true");
-  if (skipDisk) urlParams.append("skip-disk", "true");
-  if (serverLabel) urlParams.append("server-label", serverLabel);
-  // Thêm bypass secret vào query parameter nếu có (cho Vercel deployment protection)
-  if (bypassSecret) {
-    urlParams.append("x-vercel-protection-bypass", bypassSecret);
-  }
-  if (urlParams.toString()) {
-    benchmarkUrl += `?${urlParams.toString()}`;
-  }
-  // Script ngắn gọn nhất - clone pattern từ tocdo.io/install
-  // Tải và chạy trực tiếp script benchmark, không qua install.sh
-  // Hỗ trợ cả wget và curl
-  // Parse query params từ URL và set env vars
-  // Tự động detect và set REPORT_URL từ URL hiện tại (ngrok support)
-  const envVars = [];
-  if (mode) envVars.push(`export BENCHMARK_MODE="${mode}"`);
-  // Tự động set REPORT_URL từ URL hiện tại (hỗ trợ ngrok)
-  envVars.push(`export REPORT_URL="${protocol}://${host}/api/benchmark/report"`);
-  // Export bypass secret nếu có để script con có thể dùng
-  if (bypassSecret) {
-    envVars.push(`export VERCEL_BYPASS="${bypassSecret}"`);
-  }
-  const envVarsStr = envVars.length > 0 ? envVars.join("\n") + "\n" : "";
-
-  // Build curl/wget commands với bypass header nếu có
-  const wgetCmd = bypassSecret
-    ? `wget -qO /tmp/tocdovps-benchmark.sh --header="x-vercel-protection-bypass:${bypassSecret}" "${benchmarkUrl}"`
-    : `wget -qO /tmp/tocdovps-benchmark.sh "${benchmarkUrl}"`;
-  const curlCmd = bypassSecret
-    ? `curl -fsSL -H "x-vercel-protection-bypass:${bypassSecret}" "${benchmarkUrl}" -o /tmp/tocdovps-benchmark.sh`
-    : `curl -fsSL "${benchmarkUrl}" -o /tmp/tocdovps-benchmark.sh`;
-
-  const installScript = `#!/bin/sh
-${envVarsStr}${wgetCmd} && chmod +x /tmp/tocdovps-benchmark.sh && bash /tmp/tocdovps-benchmark.sh && rm -f /tmp/tocdovps-benchmark.sh || (${curlCmd} && chmod +x /tmp/tocdovps-benchmark.sh && bash /tmp/tocdovps-benchmark.sh && rm -f /tmp/tocdovps-benchmark.sh)
 `;
+      content = injectScript + content;
+    }
 
-  return new Response(installScript, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/x-shellscript; charset=utf-8",
-      "Cache-Control": "public, max-age=300",
-    },
-  });
+    return new Response(content, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/x-shellscript; charset=utf-8",
+        "Cache-Control": "public, max-age=300",
+      },
+    });
+  } catch (error) {
+    console.error("Failed to read vps-benchmark.sh:", error);
+    return new Response("Script not found", {
+      status: 404,
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+  }
 }

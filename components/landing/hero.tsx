@@ -74,7 +74,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           squareSize={15}
           gridGap={5}
           color={gridColor}
-          maxOpacity={0.05}
+          maxOpacity={0.08}
           flickerChance={0.6}
         />
       </div>

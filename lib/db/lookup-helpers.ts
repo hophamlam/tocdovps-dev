@@ -82,16 +82,8 @@ export async function getOrCreateOS(
   if (!slug) return null;
 
   try {
-    // 1. Tìm OS bằng slug
-    const existing = await db`
-      SELECT id FROM oses WHERE slug = ${slug} LIMIT 1
-    `;
-
-    if (Array.isArray(existing) && existing.length > 0) {
-      return existing[0].id;
-    }
-
-    // 2. Tìm OS bằng alias
+    // 1. Tìm OS bằng alias TRƯỚC (quan trọng nhất - tránh duplicate)
+    // Alias check trước để handle các variation names đã được map
     const aliasMatch = await db`
       SELECT os_id FROM os_aliases WHERE alias = ${osNameText} LIMIT 1
     `;
@@ -100,26 +92,100 @@ export async function getOrCreateOS(
       return aliasMatch[0].os_id;
     }
 
-    // 3. Tạo OS mới
+    // 2. Tìm OS bằng slug
+    const existing = await db`
+      SELECT id FROM oses WHERE slug = ${slug} LIMIT 1
+    `;
+
+    if (Array.isArray(existing) && existing.length > 0) {
+      // Slug đã tồn tại → merge alias vào record hiện có
+      // Điều này xử lý trường hợp: 2 tên khác nhau nhưng cùng slug
+      // Ví dụ: "Ubuntu 24.04" và "Ubuntu 24.04 LTS" (nếu slugify bỏ "LTS")
+      await db`
+        INSERT INTO os_aliases (alias, os_id)
+        VALUES (${osNameText}, ${existing[0].id})
+        ON CONFLICT (alias) DO NOTHING
+      `;
+      console.log(
+        `[DB] Merged alias "${osNameText}" into existing OS with slug "${slug}"`
+      );
+      return existing[0].id;
+    }
+
+    // 3. Tạo OS mới (chỉ khi cả alias và slug đều không tồn tại)
+    // Dùng ON CONFLICT để handle race condition: nếu 2 requests cùng insert
     const { name, version, family } = parseOSInfo(osNameText);
-    const [newOS] = await db`
+
+    // Thử insert, nếu conflict (slug đã tồn tại) → SELECT lại
+    const insertResult = await db`
       INSERT INTO oses (slug, name, version, family)
       VALUES (${slug}, ${name}, ${version}, ${family})
+      ON CONFLICT (slug) DO NOTHING
       RETURNING id
     `;
 
-    if (!newOS || !newOS.id) return null;
+    let osId: string | null = null;
 
-    // 4. Tạo alias từ original text
+    // Nếu insert thành công (không conflict)
+    if (
+      Array.isArray(insertResult) &&
+      insertResult.length > 0 &&
+      insertResult[0].id
+    ) {
+      osId = insertResult[0].id;
+    } else {
+      // Conflict → SELECT lại để lấy ID của record hiện có
+      const existing = await db`
+        SELECT id FROM oses WHERE slug = ${slug} LIMIT 1
+      `;
+      if (Array.isArray(existing) && existing.length > 0) {
+        osId = existing[0].id;
+      }
+    }
+
+    if (!osId) return null;
+
+    // 4. Tạo alias từ original text (luôn tạo alias, kể cả khi conflict)
     await db`
       INSERT INTO os_aliases (alias, os_id)
-      VALUES (${osNameText}, ${newOS.id})
+      VALUES (${osNameText}, ${osId})
       ON CONFLICT (alias) DO NOTHING
     `;
 
-    console.log(`[DB] Created new OS: ${name} ${version || ""} (${slug})`);
-    return newOS.id;
+    // Chỉ log nếu là record mới (không phải conflict)
+    if (Array.isArray(insertResult) && insertResult.length > 0) {
+      console.log(`[DB] Created new OS: ${name} ${version || ""} (${slug})`);
+    } else {
+      console.log(
+        `[DB] OS already exists (race condition handled): ${name} ${
+          version || ""
+        } (${slug})`
+      );
+    }
+    return osId;
   } catch (error) {
+    // Handle unique constraint violation (slug conflict)
+    if (
+      error instanceof Error &&
+      error.message.includes("unique constraint") &&
+      error.message.includes("slug")
+    ) {
+      // Slug conflict → tìm OS hiện có và merge alias
+      const existing = await db`
+        SELECT id FROM oses WHERE slug = ${slug} LIMIT 1
+      `;
+      if (Array.isArray(existing) && existing.length > 0) {
+        await db`
+          INSERT INTO os_aliases (alias, os_id)
+          VALUES (${osNameText}, ${existing[0].id})
+          ON CONFLICT (alias) DO NOTHING
+        `;
+        console.log(
+          `[DB] Handled slug conflict: merged alias "${osNameText}" into existing OS with slug "${slug}"`
+        );
+        return existing[0].id;
+      }
+    }
     console.error(`[DB] Error getting/creating OS "${osNameText}":`, error);
     return null;
   }
@@ -139,16 +205,8 @@ export async function getOrCreateProvider(
   if (!slug) return null;
 
   try {
-    // 1. Tìm Provider bằng slug
-    const existing = await db`
-      SELECT id FROM providers WHERE slug = ${slug} LIMIT 1
-    `;
-
-    if (Array.isArray(existing) && existing.length > 0) {
-      return existing[0].id;
-    }
-
-    // 2. Tìm Provider bằng alias
+    // 1. Tìm Provider bằng alias TRƯỚC (quan trọng nhất - tránh duplicate)
+    // Alias check trước để handle các variation names đã được map
     const aliasMatch = await db`
       SELECT provider_id FROM provider_aliases WHERE alias = ${providerText} LIMIT 1
     `;
@@ -157,25 +215,95 @@ export async function getOrCreateProvider(
       return aliasMatch[0].provider_id;
     }
 
-    // 3. Tạo Provider mới
-    const [newProvider] = await db`
+    // 2. Tìm Provider bằng slug
+    const existing = await db`
+      SELECT id FROM providers WHERE slug = ${slug} LIMIT 1
+    `;
+
+    if (Array.isArray(existing) && existing.length > 0) {
+      // Slug đã tồn tại → merge alias vào record hiện có
+      // Điều này xử lý trường hợp: 2 tên khác nhau nhưng cùng slug
+      // Ví dụ: "The Constant Company, LLC" và "The Constant Company LLC"
+      await db`
+        INSERT INTO provider_aliases (alias, provider_id)
+        VALUES (${providerText}, ${existing[0].id})
+        ON CONFLICT (alias) DO NOTHING
+      `;
+      console.log(
+        `[DB] Merged alias "${providerText}" into existing provider with slug "${slug}"`
+      );
+      return existing[0].id;
+    }
+
+    // 3. Tạo Provider mới (chỉ khi cả alias và slug đều không tồn tại)
+    // Dùng ON CONFLICT để handle race condition: nếu 2 requests cùng insert
+    const insertResult = await db`
       INSERT INTO providers (slug, display_name)
       VALUES (${slug}, ${providerText})
+      ON CONFLICT (slug) DO NOTHING
       RETURNING id
     `;
 
-    if (!newProvider || !newProvider.id) return null;
+    let providerId: string | null = null;
 
-    // 4. Tạo alias từ original text
+    // Nếu insert thành công (không conflict)
+    if (
+      Array.isArray(insertResult) &&
+      insertResult.length > 0 &&
+      insertResult[0].id
+    ) {
+      providerId = insertResult[0].id;
+    } else {
+      // Conflict → SELECT lại để lấy ID của record hiện có
+      const existing = await db`
+        SELECT id FROM providers WHERE slug = ${slug} LIMIT 1
+      `;
+      if (Array.isArray(existing) && existing.length > 0) {
+        providerId = existing[0].id;
+      }
+    }
+
+    if (!providerId) return null;
+
+    // 4. Tạo alias từ original text (luôn tạo alias, kể cả khi conflict)
     await db`
       INSERT INTO provider_aliases (alias, provider_id)
-      VALUES (${providerText}, ${newProvider.id})
+      VALUES (${providerText}, ${providerId})
       ON CONFLICT (alias) DO NOTHING
     `;
 
-    console.log(`[DB] Created new Provider: ${providerText} (${slug})`);
-    return newProvider.id;
+    // Chỉ log nếu là record mới (không phải conflict)
+    if (Array.isArray(insertResult) && insertResult.length > 0) {
+      console.log(`[DB] Created new Provider: ${providerText} (${slug})`);
+    } else {
+      console.log(
+        `[DB] Provider already exists (race condition handled): ${providerText} (${slug})`
+      );
+    }
+    return providerId;
   } catch (error) {
+    // Handle unique constraint violation (slug conflict)
+    if (
+      error instanceof Error &&
+      error.message.includes("unique constraint") &&
+      error.message.includes("slug")
+    ) {
+      // Slug conflict → tìm provider hiện có và merge alias
+      const existing = await db`
+        SELECT id FROM providers WHERE slug = ${slug} LIMIT 1
+      `;
+      if (Array.isArray(existing) && existing.length > 0) {
+        await db`
+          INSERT INTO provider_aliases (alias, provider_id)
+          VALUES (${providerText}, ${existing[0].id})
+          ON CONFLICT (alias) DO NOTHING
+        `;
+        console.log(
+          `[DB] Handled slug conflict: merged alias "${providerText}" into existing provider with slug "${slug}"`
+        );
+        return existing[0].id;
+      }
+    }
     console.error(
       `[DB] Error getting/creating Provider "${providerText}":`,
       error
