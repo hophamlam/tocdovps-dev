@@ -1288,7 +1288,9 @@ send_report_if_configured() {
       return 1
     fi
   elif command_exists python3; then
-    python3 - <<'EOF_JSON_CHECK' >/dev/null 2>&1 || {
+    # Validate JSON với python3, capture error output nếu có
+    local json_check_output
+    json_check_output=$(echo "$json_payload" | python3 - <<'EOF_JSON_CHECK' 2>&1
 import json, sys
 data = sys.stdin.read()
 try:
@@ -1299,7 +1301,9 @@ except Exception as e:
     print(data[:500])
     sys.exit(1)
 EOF_JSON_CHECK
+    )
     if [[ $? -ne 0 ]]; then
+      echo "$json_check_output"
       return 1
     fi
   fi
