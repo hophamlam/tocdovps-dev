@@ -163,8 +163,8 @@ const reportSchema = z
     fio: z.unknown().optional(),
     netSpeed: z.unknown().optional(),
     // payload: accept mọi giá trị (object, array, number, string, null, undefined)
-    // Dùng z.unknown().nullish() để chấp nhận mọi type kể cả null và undefined
-    payload: z.unknown().nullish(),
+    // Dùng z.any() để chấp nhận mọi type mà không validate
+    payload: z.any().optional(),
   })
   .passthrough(); // Cho phép các field khác không được định nghĩa trong schema
 
