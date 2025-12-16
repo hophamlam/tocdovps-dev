@@ -164,7 +164,8 @@ const reportSchema = z
     netSpeed: z.unknown().optional(),
     // payload: accept mọi giá trị (object, array, number, string, null, undefined, hoặc không có)
     // Dùng z.any() để bypass validation hoàn toàn - không validate type
-    payload: z.any().optional().default(undefined),
+    // Không dùng .default() để tránh override giá trị undefined
+    payload: z.any().optional(),
   })
   .passthrough(); // Cho phép các field khác không được định nghĩa trong schema
 

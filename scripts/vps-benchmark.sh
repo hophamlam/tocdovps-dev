@@ -1281,7 +1281,7 @@ send_report_if_configured() {
   local response http_code
   if [[ -n "${VERCEL_BYPASS:-}" ]]; then
     # Có bypass secret, thêm header vào curl command
-    response=$(curl -s -w "\n%{http_code}" -X POST "$report_url" \
+  response=$(curl -s -w "\n%{http_code}" -X POST "$report_url" \
     -H "Content-Type: application/json" \
     -H "X-VISIBILITY: $visibility" \
       -H "x-vercel-protection-bypass:${VERCEL_BYPASS}" \

@@ -10,7 +10,11 @@ export const runtime = "nodejs";
  *
  * Usage:
  * - Production: bash <(curl -fsSL https://tocdovps.dev/install)
- * - Staging: VERCEL_BYPASS="..." bash <(curl -fsSL https://staging.tocdovps.dev/install)
+ * - Staging: bash <(curl -fsSL "https://staging.tocdovps.dev/install?x-vercel-protection-bypass=TOKEN")
+ *   Hoặc: curl -fsSL "https://staging.tocdovps.dev/install?x-vercel-protection-bypass=TOKEN" | bash
+ *
+ * Note: Vercel protection bypass token phải được truyền qua query string hoặc header
+ * khi curl, không phải qua env variable VERCEL_BYPASS (env var chỉ dùng trong script sau khi download)
  *
  * @param req - NextRequest
  * @returns Response chứa bash script với REPORT_URL được set tự động (nếu có)
