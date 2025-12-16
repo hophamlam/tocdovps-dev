@@ -162,11 +162,9 @@ const reportSchema = z
     diskIo: z.unknown().optional(),
     fio: z.unknown().optional(),
     netSpeed: z.unknown().optional(),
-    // payload: accept mọi giá trị (object, array, number, string, null, undefined)
-    // Dùng z.any() để chấp nhận mọi type mà không validate
-    payload: z.any().optional(),
   })
-  .passthrough(); // Cho phép các field khác không được định nghĩa trong schema
+  .passthrough() // Cho phép các field khác không được định nghĩa trong schema (bao gồm payload)
+  .catchall(z.any()); // Bỏ qua validation cho tất cả các field không được định nghĩa (bao gồm payload)
 
 /**
  * Lấy client IP từ request headers
@@ -300,6 +298,14 @@ export async function POST(request: NextRequest) {
       },
       { status: 400 }
     );
+  }
+
+  // Normalize payload field trước khi validate
+  // Nếu payload là undefined, set thành null để tránh lỗi validation
+  if (body && typeof body === "object" && body !== null) {
+    if (!("payload" in body) || body.payload === undefined) {
+      (body as Record<string, unknown>).payload = null;
+    }
   }
 
   // Validate payload với Zod schema
