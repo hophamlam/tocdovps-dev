@@ -417,17 +417,15 @@ export async function POST(request: NextRequest) {
   const normalizedFio = normalizeJsonbValue(data.fio);
   const normalizedNetSpeed = normalizeJsonbValue(data.netSpeed);
 
-  // Ưu tiên systemInfo top-level, nếu không có thì:
-  // - Nếu payload có systemInfo dùng nó
-  // - Nếu payload không có systemInfo nhưng là object (có cpu/ram/...) thì dùng toàn bộ payload
+  // Ưu tiên systemInfo top-level, nếu không có thì lấy từ payload.systemInfo
+  // Chỉ lấy payload.systemInfo, không fallback về toàn bộ payload (tránh duplicate diskIo/fio/netSpeed)
   let systemInfoSource: unknown = data.systemInfo ?? null;
   if (!systemInfoSource && payloadObject && typeof payloadObject === "object") {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const maybeSystemInfo = (payloadObject as Record<string, any>).systemInfo;
-    systemInfoSource =
-      maybeSystemInfo && typeof maybeSystemInfo === "object"
-        ? maybeSystemInfo
-        : payloadObject;
+    if (maybeSystemInfo && typeof maybeSystemInfo === "object") {
+      systemInfoSource = maybeSystemInfo;
+    }
   }
   const normalizedSystemInfo = normalizeJsonbValue(systemInfoSource);
 

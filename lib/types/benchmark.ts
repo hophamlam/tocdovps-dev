@@ -53,6 +53,10 @@ export type BenchmarkRunSummary = {
    */
   id: string;
   /**
+   * ID hiển thị (ẩn bớt cho private, ví dụ chỉ 6 ký tự cuối)
+   */
+  idDisplay: string;
+  /**
    * Thời gian tạo record (ISO string)
    */
   createdAt: string;
@@ -72,7 +76,42 @@ export type BenchmarkRunSummary = {
    * Điểm tổng hợp (0–10) đã parse sang number, có thể null
    */
   score: number | null;
+  /**
+   * Visibility của benchmark (private/shared)
+   */
+  visibility: string;
+  /**
+   * Provider display name
+   */
+  provider: string | null;
+  providerSlug: string | null;
+  /**
+   * OS information
+   */
+  os: string | null;
+  osVersion: string | null;
+  osFamily: string | null;
+  osSlug: string | null;
+  /**
+   * OS hiển thị đầy đủ (ví dụ: Ubuntu 24.04.1 LTS (Noble Numbat))
+   */
+  osDisplay: string | null;
+  /**
+   * Virtualization information
+   */
+  virtualization: string | null;
+  virtualizationSlug: string | null;
+  /**
+   * Region information
+   */
+  regionCity: string | null;
+  regionRegion: string | null;
+  regionCountryCode: string | null;
+  /**
+   * System information (from system_info JSONB)
+   */
+  cpuModel: string | null;
+  cpuCores: number | null;
+  ramGB: number | null;
+  diskGB: number | null;
 };
-
-
-

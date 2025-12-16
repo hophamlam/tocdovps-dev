@@ -11,22 +11,46 @@ import { Marquee } from "@/components/ui/marquee";
  */
 type Technology = {
   name: string;
-  logoPath?: string; // Path đến SVG trong public/icons folder
+  logoPath?: string; // Path đến SVG trong public/techstack folder
   emoji?: string; // Emoji fallback
   url: string; // URL đến trang chủ của công nghệ
 };
 
 /**
  * Danh sách các công nghệ được sử dụng trong project
- * Sử dụng 6 SVG logos từ public/icons folder
+ * Sử dụng 6 SVG logos từ public/techstack folder
  */
 const technologies: Technology[] = [
-  { name: "Next.js", logoPath: "/icons/nextdotjs.svg", url: "https://nextjs.org" },
-  { name: "shadcn/ui", logoPath: "/icons/shadcnui.svg", url: "https://ui.shadcn.com" },
-  { name: "Vercel", logoPath: "/icons/vercel.svg", url: "https://vercel.com" },
-  { name: "Neon", logoPath: "/icons/neon-logomark-light-mono.svg", url: "https://neon.tech" },
-  { name: "Nextra", logoPath: "/icons/nextra.svg", url: "https://nextra.site" },
-  { name: "Upstash", logoPath: "/icons/upstash.svg", url: "https://upstash.com" },
+  {
+    name: "Next.js",
+    logoPath: "/techstack/nextdotjs.svg",
+    url: "https://nextjs.org",
+  },
+  {
+    name: "shadcn/ui",
+    logoPath: "/techstack/shadcnui.svg",
+    url: "https://ui.shadcn.com",
+  },
+  {
+    name: "Vercel",
+    logoPath: "/techstack/vercel.svg",
+    url: "https://vercel.com",
+  },
+  {
+    name: "Neon",
+    logoPath: "/techstack/neon-logomark-light-mono.svg",
+    url: "https://neon.tech",
+  },
+  {
+    name: "Nextra",
+    logoPath: "/techstack/nextra.svg",
+    url: "https://nextra.site",
+  },
+  {
+    name: "Upstash",
+    logoPath: "/techstack/upstash.svg",
+    url: "https://upstash.com",
+  },
 ];
 
 type TechStackProps = {
