@@ -40,11 +40,29 @@ export default async function Home() {
 
     latestItems = rows.map((row) => ({
       id: row.id,
+      idDisplay: row.id.slice(-6), // Hiển thị 6 ký tự cuối
       createdAt: new Date(row.created_at).toISOString(),
       serverLabel: row.server_label,
       avgPingMs: row.avg_ping_ms ? parseFloat(row.avg_ping_ms) : null,
       downloadMbps: row.download_mbps ? parseFloat(row.download_mbps) : null,
       score: row.score ? parseFloat(row.score) : null,
+      visibility: "shared", // Default cho landing page
+      provider: null,
+      providerSlug: null,
+      os: null,
+      osVersion: null,
+      osFamily: null,
+      osSlug: null,
+      osDisplay: null,
+      virtualization: null,
+      virtualizationSlug: null,
+      regionCity: null,
+      regionRegion: null,
+      regionCountryCode: null,
+      cpuModel: null,
+      cpuCores: null,
+      ramGB: null,
+      diskGB: null,
     }));
 
     const [countResult] = await db/* sql */ `
