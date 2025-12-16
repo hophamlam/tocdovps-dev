@@ -162,10 +162,9 @@ const reportSchema = z
     diskIo: z.unknown().optional(),
     fio: z.unknown().optional(),
     netSpeed: z.unknown().optional(),
-    // payload: accept mọi giá trị (object, array, number, string, null, undefined, hoặc không có)
-    // Dùng z.any() để bypass validation hoàn toàn - không validate type
-    // Không dùng .default() để tránh override giá trị undefined
-    payload: z.any().optional(),
+    // payload: accept mọi giá trị (object, array, number, string, null, undefined)
+    // Dùng z.unknown().nullish() để chấp nhận mọi type kể cả null và undefined
+    payload: z.unknown().nullish(),
   })
   .passthrough(); // Cho phép các field khác không được định nghĩa trong schema
 
