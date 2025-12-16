@@ -1277,6 +1277,33 @@ send_report_if_configured() {
   echo
   echo "[i] Sending benchmark report to API..."
 
+  # Optional: validate JSON payload trước khi gửi (giúp debug khi API báo lỗi Invalid JSON)
+  # Nếu JSON không hợp lệ, in preview và dừng lại để người dùng xem lỗi.
+  if command_exists jq; then
+    if ! echo "$json_payload" | jq '.' >/dev/null 2>&1; then
+      echo "[!] Local JSON validation failed (jq). Payload is NOT valid JSON."
+      echo "    Preview (first 500 chars):"
+      echo "$json_payload" | head -c 500
+      echo
+      return 1
+    fi
+  elif command_exists python3; then
+    python3 - <<'EOF_JSON_CHECK' >/dev/null 2>&1 || {
+import json, sys
+data = sys.stdin.read()
+try:
+    json.loads(data)
+except Exception as e:
+    print(f"[!] Local JSON validation failed (python json.loads): {e}")
+    print("    Preview (first 500 chars):")
+    print(data[:500])
+    sys.exit(1)
+EOF_JSON_CHECK
+    if [[ $? -ne 0 ]]; then
+      return 1
+    fi
+  fi
+
   # Gửi JSON payload kèm header X-VISIBILITY và bypass header nếu có VERCEL_BYPASS (cho Vercel deployment protection)
   local response http_code
   if [[ -n "${VERCEL_BYPASS:-}" ]]; then
