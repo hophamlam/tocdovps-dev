@@ -25,12 +25,31 @@ export async function GET(req: NextRequest): Promise<Response> {
     const scriptPath = resolve(process.cwd(), "scripts", "vps-benchmark.sh");
     let content = readFileSync(scriptPath, "utf8");
 
-    // Lấy REPORT_URL từ environment variable (chỉ có trên server)
-    // Không inject VERCEL_BYPASS để tránh lộ token - user phải tự set nếu cần
-    const reportUrl =
-      process.env.REPORT_URL || "https://www.tocdovps.dev/api/benchmark/report";
+    // Xác định REPORT_URL dựa trên:
+    // 1. REPORT_URL env var (nếu có)
+    // 2. BASE_URL env var + /api/benchmark/report (nếu có)
+    // 3. Request hostname (tự động detect staging)
+    // 4. Fallback về production default
+    const hostname = req.headers.get("host") || "";
+    const isStaging = hostname.includes("staging.tocdovps.dev");
 
-    // Chỉ inject REPORT_URL nếu khác với default (staging environment)
+    let reportUrl: string;
+
+    if (process.env.REPORT_URL) {
+      // Ưu tiên REPORT_URL env var nếu có
+      reportUrl = process.env.REPORT_URL;
+    } else if (process.env.BASE_URL) {
+      // Dùng BASE_URL để build REPORT_URL
+      reportUrl = `${process.env.BASE_URL}/api/benchmark/report`;
+    } else if (isStaging) {
+      // Tự động detect staging từ hostname
+      reportUrl = "https://staging.tocdovps.dev/api/benchmark/report";
+    } else {
+      // Fallback về production
+      reportUrl = "https://www.tocdovps.dev/api/benchmark/report";
+    }
+
+    // Chỉ inject REPORT_URL nếu khác với default (staging environment hoặc custom URL)
     if (reportUrl !== "https://www.tocdovps.dev/api/benchmark/report") {
       const injectScript = `#!/bin/bash
 # Auto-injected REPORT_URL (from server-side, not hardcoded)

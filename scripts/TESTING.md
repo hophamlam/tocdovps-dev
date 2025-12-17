@@ -121,6 +121,41 @@ bash <(curl -fsSL -H "x-vercel-protection-bypass:$VERCEL_BYPASS" \
 
 ## 3. Troubleshooting
 
+### Lỗi 401 khi download script từ `/install` (Staging)
+
+Nếu gặp lỗi 401 khi download script từ staging `/install`:
+
+**Nguyên nhân:** Vercel Deployment Protection block request ở edge level, trước khi đến Next.js route.
+
+**Giải pháp - 2-step process với cookie:**
+
+```bash
+# Step 1: Set cookie bypass (tạo cookie file)
+VERCEL_BYPASS="your-token-here"
+curl -c /tmp/vercel_bypass_cookie.txt -fsSL \
+  -H "x-vercel-protection-bypass:$VERCEL_BYPASS" \
+  "https://staging.tocdovps.dev/install?x-vercel-protection-bypass=$VERCEL_BYPASS&x-vercel-set-bypass-cookie=true" \
+  > /dev/null
+
+# Step 2: Download script với cookie đã set
+export VERCEL_BYPASS="your-token-here"
+bash <(curl -b /tmp/vercel_bypass_cookie.txt -fsSL \
+  "https://staging.tocdovps.dev/install")
+
+# Cleanup
+rm -f /tmp/vercel_bypass_cookie.txt
+```
+
+**Hoặc dùng một lệnh (inline):**
+
+```bash
+VERCEL_BYPASS="your-token-here" \
+bash -c 'curl -c /tmp/vb.txt -fsSL -H "x-vercel-protection-bypass:$VERCEL_BYPASS" \
+  "https://staging.tocdovps.dev/install?x-vercel-protection-bypass=$VERCEL_BYPASS&x-vercel-set-bypass-cookie=true" > /dev/null && \
+  curl -b /tmp/vb.txt -fsSL "https://staging.tocdovps.dev/install" | bash && \
+  rm -f /tmp/vb.txt'
+```
+
 ### Lỗi 401/403 khi POST lên API (Staging)
 
 Nếu gặp lỗi 401/403 khi script gửi report lên staging API:
@@ -262,16 +297,31 @@ Format này đảm bảo test chính xác như production.
 **Commands thực tế cho staging (copy-paste ready):**
 
 ```bash
+# Setup token
+export VERCEL_BYPASS="your-token-here"
+
 # 1. Test API với sample data (nhanh, ~5 giây)
-VERCEL_BYPASS="your-token-here" \
+# Nếu có script local:
 REPORT_URL="https://staging.tocdovps.dev/api/benchmark/report" \
-bash <(curl -fsSL -H "x-vercel-protection-bypass:$VERCEL_BYPASS" \
-  "https://staging.tocdovps.dev/scripts/test-api-sample.sh?x-vercel-protection-bypass=$VERCEL_BYPASS&x-vercel-set-bypass-cookie=true")
+bash scripts/test-api-sample.sh
+
+# Hoặc download từ server (cần bypass cookie):
+curl -c /tmp/vb.txt -fsSL -H "x-vercel-protection-bypass:$VERCEL_BYPASS" \
+  "https://staging.tocdovps.dev/scripts/test-api-sample.sh?x-vercel-protection-bypass=$VERCEL_BYPASS&x-vercel-set-bypass-cookie=true" > /dev/null
+REPORT_URL="https://staging.tocdovps.dev/api/benchmark/report" \
+bash <(curl -b /tmp/vb.txt -fsSL "https://staging.tocdovps.dev/scripts/test-api-sample.sh")
+rm -f /tmp/vb.txt
 
 # 2. Test full benchmark (chậm, ~15 phút)
-VERCEL_BYPASS="your-token-here" \
-bash <(curl -fsSL -H "x-vercel-protection-bypass:$VERCEL_BYPASS" \
-  "https://staging.tocdovps.dev/install?x-vercel-protection-bypass=$VERCEL_BYPASS&x-vercel-set-bypass-cookie=true")
+# Step 1: Set cookie bypass
+curl -c /tmp/vb.txt -fsSL -H "x-vercel-protection-bypass:$VERCEL_BYPASS" \
+  "https://staging.tocdovps.dev/install?x-vercel-protection-bypass=$VERCEL_BYPASS&x-vercel-set-bypass-cookie=true" > /dev/null
+
+# Step 2: Download và chạy script với cookie
+bash <(curl -b /tmp/vb.txt -fsSL "https://staging.tocdovps.dev/install")
+
+# Cleanup
+rm -f /tmp/vb.txt
 ```
 
 **Hoặc dùng env var (nếu đã set):**
