@@ -4,6 +4,7 @@
  */
 
 import { db } from "@/lib/db";
+import { normalizeCountryCode } from "@/lib/geo/countries";
 
 /**
  * Tạo slug từ text (lowercase, replace spaces với dashes, remove special chars)
@@ -192,6 +193,43 @@ export async function getOrCreateOS(
 }
 
 /**
+ * Normalize provider name từ legal name sang brand name
+ * Sử dụng provider_mappings table (AI-driven hoặc manual)
+ * @param legalName - Legal name từ IP geolocation
+ * @returns Brand name hoặc original name nếu không có mapping
+ */
+async function normalizeProviderNameFromDB(legalName: string): Promise<string> {
+  try {
+    // Tìm brand_name từ provider_mappings table
+    // Ưu tiên mappings có confidence_score cao nhất và updated_at mới nhất
+    const mapping = await db`
+      SELECT brand_name, confidence_score
+      FROM provider_mappings
+      WHERE legal_name = ${legalName}
+      ORDER BY confidence_score DESC, updated_at DESC
+      LIMIT 1
+    `;
+
+    if (Array.isArray(mapping) && mapping.length > 0) {
+      console.log(
+        `[DB] Normalized provider: "${legalName}" → "${mapping[0].brand_name}" (confidence: ${mapping[0].confidence_score})`
+      );
+      return mapping[0].brand_name;
+    }
+
+    // Không tìm thấy mapping → return original
+    return legalName;
+  } catch (error) {
+    // Nếu table chưa tồn tại hoặc có lỗi, return original
+    console.warn(
+      `[DB] Could not normalize provider name (table may not exist):`,
+      error instanceof Error ? error.message : error
+    );
+    return legalName;
+  }
+}
+
+/**
  * Lookup hoặc tạo Provider record trong lookup table
  * @param providerText - Provider text từ benchmark (ví dụ: "Vultr" hoặc "The Constant Company, LLC")
  * @returns Provider ID (uuid) hoặc null nếu không tạo được
@@ -201,14 +239,19 @@ export async function getOrCreateProvider(
 ): Promise<string | null> {
   if (!providerText) return null;
 
-  const slug = slugify(providerText);
+  try {
+    // 0. Normalize provider name từ database mapping TRƯỚC TIÊN
+    // Điều này đảm bảo legal names được map sang brand names đúng cách
+    const normalizedName = await normalizeProviderNameFromDB(providerText);
+    const slug = slugify(normalizedName);
   if (!slug) return null;
 
-  try {
     // 1. Tìm Provider bằng alias TRƯỚC (quan trọng nhất - tránh duplicate)
-    // Alias check trước để handle các variation names đã được map
+    // Check cả original text và normalized name
     const aliasMatch = await db`
-      SELECT provider_id FROM provider_aliases WHERE alias = ${providerText} LIMIT 1
+      SELECT provider_id FROM provider_aliases 
+      WHERE alias = ${providerText} OR alias = ${normalizedName}
+      LIMIT 1
     `;
 
     if (Array.isArray(aliasMatch) && aliasMatch.length > 0) {
@@ -236,10 +279,11 @@ export async function getOrCreateProvider(
     }
 
     // 3. Tạo Provider mới (chỉ khi cả alias và slug đều không tồn tại)
+    // Dùng normalized name làm display_name (brand name), nhưng vẫn lưu original text vào alias
     // Dùng ON CONFLICT để handle race condition: nếu 2 requests cùng insert
     const insertResult = await db`
-      INSERT INTO providers (slug, display_name)
-      VALUES (${slug}, ${providerText})
+      INSERT INTO providers (slug, display_name, brand_name)
+      VALUES (${slug}, ${normalizedName}, ${normalizedName})
       ON CONFLICT (slug) DO NOTHING
       RETURNING id
     `;
@@ -265,10 +309,13 @@ export async function getOrCreateProvider(
 
     if (!providerId) return null;
 
-    // 4. Tạo alias từ original text (luôn tạo alias, kể cả khi conflict)
+    // 4. Tạo alias từ original text VÀ normalized name (luôn tạo alias, kể cả khi conflict)
+    // Lưu cả legal name (original) và brand name (normalized) vào aliases
     await db`
       INSERT INTO provider_aliases (alias, provider_id)
-      VALUES (${providerText}, ${providerId})
+      VALUES 
+        (${providerText}, ${providerId}),
+        (${normalizedName}, ${providerId})
       ON CONFLICT (alias) DO NOTHING
     `;
 
@@ -377,8 +424,15 @@ export async function getOrCreateRegion(
 ): Promise<string | null> {
   if (!city && !region && !country) return null;
 
-  // Tạo slug từ city-region-country
-  const slugParts = [city, region, country].filter(Boolean);
+  // Normalize country code: ưu tiên countryCode, nếu không có thì normalize từ country
+  // Dùng normalizeCountryCode() để convert country name → ISO code
+  const normalizedCountryCode =
+    normalizeCountryCode(countryCode || country) || null;
+
+  // Tạo slug từ city-region-countryCode (dùng country code thay vì country name để tránh duplicate)
+  const slugParts = [city, region, normalizedCountryCode || country].filter(
+    Boolean
+  );
   const slug = slugify(slugParts.join("-"));
   if (!slug) return null;
 
@@ -392,14 +446,14 @@ export async function getOrCreateRegion(
       return existing[0].id;
     }
 
-    // 2. Tạo Region mới
+    // 2. Tạo Region mới (dùng normalized country code)
     const [newRegion] = await db`
       INSERT INTO regions (slug, city, region, country_code, latitude, longitude)
       VALUES (
         ${slug},
         ${city || null},
         ${region || null},
-        ${countryCode || null},
+        ${normalizedCountryCode || null},
         ${latitude || null},
         ${longitude || null}
       )

@@ -395,15 +395,58 @@ export async function POST(request: NextRequest) {
     if (payloadObject && typeof payloadObject === "object") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload = payloadObject as Record<string, any>;
-      const location = payload.location || payload.systemInfo?.location;
+      // Tìm location trong nhiều nơi: payload.location, payload.systemInfo.location, systemInfo.location
+      const location =
+        payload.location ||
+        payload.systemInfo?.location ||
+        (data.systemInfo &&
+        typeof data.systemInfo === "object" &&
+        "location" in data.systemInfo
+          ? (data.systemInfo as Record<string, any>).location
+          : null);
+
       if (location && typeof location === "object") {
+        // Parse location data từ bash script format
+        // Bash script gửi: { city, region, country, loc: "lat,lon", publicIp }
+        const city = location.city || null;
+        const region = location.region || null;
+        const country = location.country || null;
+        // countryCode: ưu tiên countryCode, nếu không có thì dùng country
+        // getOrCreateRegion sẽ normalize country code
+        const countryCode = location.countryCode || location.country || null;
+
+        // Parse lat/lon từ "loc" field (format: "10.8231,106.6297")
+        let latitude: number | null = null;
+        let longitude: number | null = null;
+        if (location.latitude && typeof location.latitude === "number") {
+          latitude = location.latitude;
+        } else if (location.lat && typeof location.lat === "number") {
+          latitude = location.lat;
+        } else if (location.loc && typeof location.loc === "string") {
+          // Parse "10.8231,106.6297" format
+          const parts = location.loc.split(",");
+          if (parts.length === 2) {
+            const lat = parseFloat(parts[0]?.trim() || "");
+            const lon = parseFloat(parts[1]?.trim() || "");
+            if (!isNaN(lat) && !isNaN(lon)) {
+              latitude = lat;
+              longitude = lon;
+            }
+          }
+        }
+        if (location.longitude && typeof location.longitude === "number") {
+          longitude = location.longitude;
+        } else if (location.lon && typeof location.lon === "number") {
+          longitude = location.lon;
+        }
+
         regionId = await getOrCreateRegion(
-          location.city,
-          location.region,
-          location.country,
-          location.countryCode,
-          location.latitude,
-          location.longitude
+          city,
+          region,
+          country,
+          countryCode,
+          latitude,
+          longitude
         );
       }
     }
@@ -482,6 +525,30 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Extract region text fields từ location (nếu có) để lưu vào text columns
+  let regionCity: string | null = null;
+  let regionRegion: string | null = null;
+  let regionCountryCode: string | null = null;
+
+  if (payloadObject && typeof payloadObject === "object") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload = payloadObject as Record<string, any>;
+    const location =
+      payload.location ||
+      payload.systemInfo?.location ||
+      (data.systemInfo &&
+      typeof data.systemInfo === "object" &&
+      "location" in data.systemInfo
+        ? (data.systemInfo as Record<string, any>).location
+        : null);
+
+    if (location && typeof location === "object") {
+      regionCity = location.city || null;
+      regionRegion = location.region || null;
+      regionCountryCode = location.countryCode || location.country || null;
+    }
+  }
+
   try {
     // Insert vào database
     const [row] = await db/* sql */ `
@@ -505,11 +572,18 @@ export async function POST(request: NextRequest) {
         uptime_seconds,
         os_name_text,
         os_slug,
+        os_id,
         virtualization_text,
         virtualization_slug,
+        virtualization_id,
         provider_text,
         provider_slug,
+        provider_id,
         cpu_slug,
+        region_id,
+        region_city,
+        region_region,
+        region_country_code,
         system_info,
         disk_io,
         fio,
@@ -538,11 +612,18 @@ export async function POST(request: NextRequest) {
         ${data.uptimeSeconds ?? null},
         ${data.osNameText ?? null},
         ${osSlug ?? null},
+        ${osId ?? null},
         ${data.virtualizationText ?? null},
         ${virtualizationSlug ?? null},
+        ${virtualizationId ?? null},
         ${data.providerText ?? null},
         ${providerSlug ?? null},
+        ${providerId ?? null},
         ${cpuSlug ?? null},
+        ${regionId ?? null},
+        ${regionCity ?? null},
+        ${regionRegion ?? null},
+        ${regionCountryCode ?? null},
         ${
           normalizedSystemInfo
             ? db.unsafe(

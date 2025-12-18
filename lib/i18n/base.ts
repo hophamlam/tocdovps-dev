@@ -369,6 +369,35 @@ export const baseTranslations = {
       "FIO test có thể bỏ qua với `SKIP_FIO=1` nếu bạn chỉ cần basic disk I/O test",
     "docs.technical.bestPractices.item7":
       "Sử dụng `NETWORK_ONLY=1` để kiểm tra tốc độ mạng nhanh mà không chạy các tests khác",
+    "feedback.providerDialog.trigger": "Góp ý / Báo lỗi",
+    "feedback.providerDialog.title": "Góp ý / Báo lỗi Provider",
+    "feedback.providerDialog.benchmarkId": "Benchmark ID",
+    "feedback.providerDialog.currentProvider": "Provider hiện tại",
+    "feedback.providerDialog.type.label": "Loại góp ý",
+    "feedback.providerDialog.type.wrongProvider": "Provider hiển thị sai",
+    "feedback.providerDialog.type.missingInfo": "Thêm / thiếu thông tin",
+    "feedback.providerDialog.brandName": "Brand Name",
+    "feedback.providerDialog.brandName.placeholder":
+      "Tên brand chính thức (ví dụ: Vultr, DigitalOcean)",
+    "feedback.providerDialog.website": "Website",
+    "feedback.providerDialog.website.placeholder": "vultr.com",
+    "feedback.providerDialog.icon": "Icon",
+    "feedback.providerDialog.icon.url": "URL",
+    "feedback.providerDialog.icon.upload": "Upload",
+    "feedback.providerDialog.description": "Mô tả chi tiết",
+    "feedback.providerDialog.description.placeholder":
+      "Không bắt buộc, nhưng càng chi tiết càng dễ xử lý (optional)",
+    "feedback.providerDialog.email": "Email (tuỳ chọn)",
+    "feedback.providerDialog.email.placeholder":
+      "Để trống nếu bạn muốn ẩn danh",
+    "feedback.providerDialog.anonymous":
+      "Gửi ẩn danh (không bắt buộc để lại email)",
+    "feedback.providerDialog.close": "Đóng",
+    "feedback.providerDialog.submit": "Gửi góp ý",
+    "feedback.providerDialog.submitting": "Đang gửi...",
+    "feedback.providerDialog.success":
+      "Cảm ơn bạn đã góp ý! Tụi mình sẽ xem và cập nhật sớm.",
+    "feedback.providerDialog.error.generic": "Có lỗi xảy ra. Vui lòng thử lại.",
   },
   en: {
     "header.brand": "tocdovps.dev",
@@ -755,5 +784,35 @@ export const baseTranslations = {
       "FIO test can be skipped with `SKIP_FIO=1` if you only need basic disk I/O test",
     "docs.technical.bestPractices.item7":
       "Use `NETWORK_ONLY=1` for quick network speed check without running other tests",
+    "feedback.providerDialog.trigger": "Feedback / Report issue",
+    "feedback.providerDialog.title": "Feedback / Report Provider Issue",
+    "feedback.providerDialog.benchmarkId": "Benchmark ID",
+    "feedback.providerDialog.currentProvider": "Current provider",
+    "feedback.providerDialog.type.label": "Feedback type",
+    "feedback.providerDialog.type.wrongProvider": "Wrong provider shown",
+    "feedback.providerDialog.type.missingInfo":
+      "Missing / incorrect information",
+    "feedback.providerDialog.brandName": "Brand name",
+    "feedback.providerDialog.brandName.placeholder":
+      "Official brand name (e.g. Vultr, DigitalOcean)",
+    "feedback.providerDialog.website": "Website",
+    "feedback.providerDialog.website.placeholder": "vultr.com",
+    "feedback.providerDialog.icon": "Icon",
+    "feedback.providerDialog.icon.url": "URL",
+    "feedback.providerDialog.icon.upload": "Upload",
+    "feedback.providerDialog.description": "Detailed description",
+    "feedback.providerDialog.description.placeholder":
+      "Optional, but more details help us fix things faster",
+    "feedback.providerDialog.email": "Email (optional)",
+    "feedback.providerDialog.email.placeholder":
+      "Leave empty if you prefer to stay anonymous",
+    "feedback.providerDialog.anonymous": "Send anonymously (email is optional)",
+    "feedback.providerDialog.close": "Close",
+    "feedback.providerDialog.submit": "Submit feedback",
+    "feedback.providerDialog.submitting": "Submitting...",
+    "feedback.providerDialog.success":
+      "Thanks for your feedback! We'll review and update soon.",
+    "feedback.providerDialog.error.generic":
+      "Something went wrong. Please try again.",
   },
 } as const satisfies Record<Locale, Record<string, string>>;

@@ -53,6 +53,10 @@ export type BenchmarkRunSummary = {
    */
   id: string;
   /**
+   * ID tăng dần để hiển thị (public_id từ view)
+   */
+  publicId: number | null;
+  /**
    * ID hiển thị (ẩn bớt cho private, ví dụ chỉ 6 ký tự cuối)
    */
   idDisplay: string;
@@ -84,7 +88,15 @@ export type BenchmarkRunSummary = {
    * Provider display name
    */
   provider: string | null;
+  providerBrandName: string | null;
   providerSlug: string | null;
+  providerWebsiteUrl: string | null;
+  providerLogoUrl: string | null;
+  /**
+   * Provider text gốc từ benchmark_runs (fallback khi không có provider_id)
+   * Ví dụ: tên datacenter / legal name từ IP geolocation
+   */
+  providerText: string | null;
   /**
    * OS information
    */
@@ -114,4 +126,71 @@ export type BenchmarkRunSummary = {
   cpuCores: number | null;
   ramGB: number | null;
   diskGB: number | null;
+  /**
+   * Uptime của hệ thống (giây)
+   */
+  uptimeSeconds?: number | null;
+};
+
+/**
+ * Type cho Disk I/O data từ DB JSONB
+ */
+export type DiskIoData = {
+  writeSpeedMbps?: number;
+  writeSpeedMBs?: number;
+  readSpeedMbps?: number;
+  readSpeedMBs?: number;
+  timeSeconds?: number;
+  bytesWritten?: number;
+};
+
+/**
+ * Type cho FIO block size data
+ */
+export type FioBlockSizeData = {
+  total?: number;
+  read?: number;
+  write?: number;
+  iops?: number;
+  iopsRead?: number;
+  iopsWrite?: number;
+};
+
+/**
+ * Type cho FIO data từ DB JSONB
+ */
+export type FioData = {
+  "4k"?: FioBlockSizeData;
+  "64k"?: FioBlockSizeData;
+  "512k"?: FioBlockSizeData;
+  "1M"?: FioBlockSizeData;
+};
+
+/**
+ * Type cho Network Speed item từ DB JSONB
+ */
+export type NetSpeedItem = {
+  server?: string;
+  ping?: number;
+  download?: number;
+  upload?: number;
+};
+
+/**
+ * Kiểu chi tiết cho một benchmark result (dùng cho result detail page)
+ * - Mở rộng từ BenchmarkRunSummary với thêm performance metrics
+ */
+export type BenchmarkResultDetail = BenchmarkRunSummary & {
+  /**
+   * Disk I/O performance metrics
+   */
+  diskIo: DiskIoData | null;
+  /**
+   * FIO benchmark results
+   */
+  fio: FioData | null;
+  /**
+   * Network speed test results (array of server tests)
+   */
+  netSpeed: NetSpeedItem[] | null;
 };

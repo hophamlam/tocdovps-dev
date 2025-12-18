@@ -1,8 +1,13 @@
 import { db } from "@/lib/db";
-import type { BenchmarkRunSummary } from "@/lib/types/benchmark";
+import type {
+  BenchmarkRunSummary,
+  BenchmarkResultDetail,
+} from "@/lib/types/benchmark";
 import {
   type BenchmarkRow,
+  type BenchmarkDetailRow,
   mapBenchmarkRowToSummary,
+  mapBenchmarkDetailRowToResult,
 } from "@/lib/utils/benchmark";
 
 /**
@@ -37,6 +42,7 @@ export class BenchmarkRepository {
         SELECT
           id,
           id_display,
+          public_id,
           created_at,
           server_label,
           avg_ping_ms,
@@ -44,6 +50,7 @@ export class BenchmarkRepository {
           score,
           visibility,
           system_info,
+          uptime_seconds,
           provider_display_name,
           provider_slug,
           os_name,
@@ -54,7 +61,10 @@ export class BenchmarkRepository {
           virtualization_slug,
           region_city,
           region_region,
-          region_country_code
+          region_country_code,
+          provider_brand_name,
+          provider_website_url,
+          provider_logo_url
         FROM public.benchmark_leaderboard_view
         WHERE visibility = ${visibility}
         ORDER BY created_at DESC
@@ -66,6 +76,7 @@ export class BenchmarkRepository {
         SELECT
           id,
           id_display,
+          public_id,
           created_at,
           server_label,
           avg_ping_ms,
@@ -73,6 +84,7 @@ export class BenchmarkRepository {
           score,
           visibility,
           system_info,
+          uptime_seconds,
           provider_display_name,
           provider_slug,
           os_name,
@@ -83,7 +95,10 @@ export class BenchmarkRepository {
           virtualization_slug,
           region_city,
           region_region,
-          region_country_code
+          region_country_code,
+          provider_brand_name,
+          provider_website_url,
+          provider_logo_url
         FROM public.benchmark_leaderboard_view
         ORDER BY created_at DESC
         LIMIT ${effectiveLimit}
@@ -168,5 +183,65 @@ export class BenchmarkRepository {
     }
 
     return Number(countResult?.total_count ?? 0);
+  }
+
+  /**
+   * Lấy chi tiết một benchmark result theo ID
+   * @param id - Benchmark ID
+   * @returns BenchmarkResultDetail hoặc null nếu không tìm thấy
+   */
+  static async getBenchmarkById(
+    id: string
+  ): Promise<BenchmarkResultDetail | null> {
+    try {
+      // Query benchmark by ID với JOIN lookup tables
+      const resultRows = await db/* sql */ `
+        SELECT
+          br.id,
+          br.created_at,
+          br.server_label,
+          br.avg_ping_ms,
+          br.download_mbps,
+          br.score,
+          br.visibility,
+          br.system_info,
+          br.disk_io,
+          br.fio,
+          br.net_speed,
+          br.uptime_seconds,
+          -- Provider info
+          p.display_name as provider_display_name,
+          p.brand_name as provider_brand_name,
+          p.slug as provider_slug,
+          p.website_url as provider_website_url,
+          p.logo_url as provider_logo_url,
+          -- OS info
+          o.name as os_name,
+          o.version as os_version,
+          o.family as os_family,
+          o.slug as os_slug,
+          -- Virtualization info
+          v.display_name as virtualization_name,
+          v.slug as virtualization_slug,
+          -- Region info
+          r.city as region_city,
+          r.region as region_region,
+          r.country_code as region_country_code
+        FROM benchmark_runs br
+        LEFT JOIN providers p ON br.provider_id = p.id
+        LEFT JOIN oses o ON br.os_id = o.id
+        LEFT JOIN virtualizations v ON br.virtualization_id = v.id
+        LEFT JOIN regions r ON br.region_id = r.id
+        WHERE br.id = ${id}
+      `;
+      const [result] = resultRows as BenchmarkDetailRow[];
+      if (!result) {
+        return null;
+      }
+      return mapBenchmarkDetailRowToResult(result);
+    } catch (error) {
+      console.error("Failed to fetch benchmark result:", error);
+      return null;
+    }
   }
 }

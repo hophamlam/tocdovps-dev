@@ -39,12 +39,12 @@ export const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-        <Link
-          href="/"
-          className="text-lg font-semibold tracking-tight sm:text-xl"
-        >
-          tocdovps.dev
-        </Link>
+          <Link
+            href="/"
+            className="text-lg font-semibold tracking-tight sm:text-xl"
+          >
+            tocdovps.dev
+          </Link>
         <div className="flex items-center gap-3">
           <nav className="hidden items-center gap-4 text-xs sm:flex">
             <Link

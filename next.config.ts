@@ -11,7 +11,20 @@ import createMDX from "@next/mdx";
 const nextConfig: NextConfig = {
   // Configure pageExtensions để include markdown và MDX files
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
-  // Optionally, add any other Next.js config below
+
+  // Image optimization config cho external images
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "flagcdn.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.tocdovps.dev",
+      },
+    ],
+  },
 };
 
 const withMDX = createMDX({
