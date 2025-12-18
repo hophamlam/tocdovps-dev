@@ -284,8 +284,21 @@ export async function PUT(request: NextRequest) {
       RETURNING id, legal_name, brand_name, updated_at
     `;
 
-    // Sử dụng db(query, params) thay vì db.unsafe để tương thích type Neon
-    const [updated] = await db(updateQuery, values);
+    // Sử dụng db.unsafe với type casting để tương thích typings của Neon
+    // Ở runtime, db.unsafe(query, params) vẫn trả về mảng rows như db\`...\`
+    const updatedRows = (await (db as unknown as {
+      unsafe: (
+        query: string,
+        params?: unknown[]
+      ) => Promise<Array<Record<string, unknown>>>;
+    }).unsafe(updateQuery, values)) as Array<{
+      id: string;
+      legal_name: string;
+      brand_name: string;
+      updated_at: string;
+    }>;
+
+    const [updated] = updatedRows;
 
     return NextResponse.json({
       success: true,
