@@ -284,7 +284,8 @@ export async function PUT(request: NextRequest) {
       RETURNING id, legal_name, brand_name, updated_at
     `;
 
-    const [updated] = await db.unsafe(updateQuery, values);
+    // Sử dụng db(query, params) thay vì db.unsafe để tương thích type Neon
+    const [updated] = await db(updateQuery, values);
 
     return NextResponse.json({
       success: true,
