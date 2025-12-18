@@ -1482,6 +1482,21 @@ main() {
       ;;
   esac
 
+  # Thông báo lại mode đã chọn cho user (giúp tránh nhầm lẫn khi chạy non-interactive)
+  echo
+  echo "[i] Selected share mode: $sharing_mode"
+  case "$sharing_mode" in
+    local)
+      echo "    - Mode: local   → keep result local only (no data sent to tocdovps.dev)"
+      ;;
+    private)
+      echo "    - Mode: private → send to tocdovps.dev with a private, unlisted URL"
+      ;;
+    shared)
+      echo "    - Mode: shared  → send to tocdovps.dev and allow result to appear on leaderboard"
+      ;;
+  esac
+
   # Kiểm tra command cần thiết cho disk I/O test
   if ! command_exists dd; then
     echo "[!] 'dd' command is required for disk I/O test but not found."
