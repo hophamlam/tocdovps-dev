@@ -239,13 +239,13 @@ export async function getOrCreateProvider(
 ): Promise<string | null> {
   if (!providerText) return null;
 
-  try {
-    // 0. Normalize provider name từ database mapping TRƯỚC TIÊN
-    // Điều này đảm bảo legal names được map sang brand names đúng cách
-    const normalizedName = await normalizeProviderNameFromDB(providerText);
-    const slug = slugify(normalizedName);
+  // 0. Normalize provider name từ database mapping TRƯỚC TIÊN (ngoài try/catch để dùng lại slug trong catch)
+  // Điều này đảm bảo legal names được map sang brand names đúng cách
+  const normalizedName = await normalizeProviderNameFromDB(providerText);
+  const slug = slugify(normalizedName);
   if (!slug) return null;
 
+  try {
     // 1. Tìm Provider bằng alias TRƯỚC (quan trọng nhất - tránh duplicate)
     // Check cả original text và normalized name
     const aliasMatch = await db`
